@@ -1,30 +1,57 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+/>
     <meta charset="utf-8">
     <title></title>
   </head>
   <body>
 
-    <div class="button">
-      <button type="button" name="button" id="button">play</button>
+      <button type="button" name="button" id="play">play</button>
+      <button type="button" name="button" id="pause">pause</button>
+      <input type="range" id="volume">
 
-    </div>
+
+
+
+
     <script type="text/javascript">
-    var btn = document.getElementById('button');
-    btn.addEventListener("click",function(){
-
-      const player = new Tone.Player("https://tonejs.github.io/audio/berklee/gong_1.mp3").toDestination();
-    Tone.loaded().then(() => {
-    player.start();
-    });
-
-
+    const crossFade = new Tone.CrossFade().toDestination();
+    var inputA = new Tone.Player("http://christiandietz.ch/media/angels.mp3").toDestination();
+    inputA.connect(crossFade.a);
+    //var inputB = new Tone.Player("./iwannadancewithsomebody-808Pattern.mp3").toDestination();
+    //inputB.connect(crossFade.b);
+    var play = document.getElementById('play');
+    var pause = document.getElementById('pause');
 
 
 
 
+    play.addEventListener("click",function(){
+      // connect two inputs Tone.to a/b
+      Tone.loaded().then(() => {
+        inputA.start();
+        //inputB.start();
+      });
+
+      // use the fade to control the mix between the two
+    })
+    pause.addEventListener("click",function(){
+      // connect two inputs Tone.to a/b
+      inputA.stop();
+      //inputB.stop();
+      // use the fade to control the mix between the two
+    })
+
+    var vol = document.getElementById('volume');
+    vol.addEventListener("input",function(e){
+      //console.log(e.target.value);
+      crossFade.fade.value = e.target.value/100;
     })
 
 
