@@ -14,15 +14,16 @@
       <button type="button" name="button" id="play">play</button>
       <button type="button" name="button" id="pause">pause</button>
       <input type="range" id="volume">
+      <input type="range" id="volumeA" min="-40" max="0">
 
     <script type="text/javascript">
 
     const crossFade = new Tone.CrossFade(0.5).toDestination();
     var inputA = new Tone.Player("iwannadancewithsomebody-Original.mp3").toDestination();
-    inputA.connect(crossFade.a, 0, 0);
+    inputA.connect(crossFade.a);
 
     var inputB = new Tone.Player("./iwannadancewithsomebody-808Pattern.mp3").toDestination();
-    inputB.connect(crossFade.b, 0, 1);
+    inputB.connect(crossFade.b);
 
     var play = document.getElementById('play');
     var pause = document.getElementById('pause');
@@ -47,6 +48,11 @@
     vol.addEventListener("input",function(e){
       console.log(e.target.value/100);
       crossFade.fade.value = e.target.value/100;
+    })
+    var volA = document.getElementById('volumeA');
+    volA.addEventListener("input",function(e){
+      console.log(e.target.value);
+      inputA.volume.value = e.target.value;
     })
 
 
