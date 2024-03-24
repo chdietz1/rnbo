@@ -59,7 +59,7 @@
     vol.addEventListener("input",function(e){
       console.log(e.target.value/100);
       const volA = new Tone.Volume(e.target.value/100).toDestination();
-      const fileA= new inputA.connect(volA);
+      inputA.connect(volA);
     })
 
     </script>
