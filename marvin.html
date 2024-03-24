@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://unpkg.com/tone@14.7.77/build/Tone.js"></script>
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+/>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+<article data-theme="light">
+<h1>Whitney Houston - I Wanna Dance With Somebody</h1>
+<h2>Arista Records, 1987</h2>
+
+
+      <!-- <input type="range" id="volume"> -->
+      <!-- <input type="range" id="volumeA" min="-30" max="0"> -->
+<table  width="100%">
+
+  <tr>
+    <td><img src="./img/whitneySMALLdancewithsome_grande.png" width="300px"></td>
+    <td><input type="range" id="volumeB" min="-30" max="0"><p align="center"><< slide >></p></td>
+    <td><img src="./img/iWannaDanceWithSomebody.png" width="400px" style="float: right;"></td>
+  </tr>
+  <tr>
+    <td><h3 align="center">Original</h3></td>
+    <td></td>
+    <td><h3 align="center">TR-808 Pattern</h3></td>
+  </tr>
+  <tr><td></td><td>
+    <button type="button" name="button" id="play" style="float: left;">play</button>
+    <button type="button" name="button" id="pause" style="float: right;">stop</button>
+  </td><td></td></tr>
+  <tr><td></td><td>
+    <p align="center">Für Sound Klingelton einschalten</p>
+  </td><td></td></tr>
+</table>
+<p>Der Roland TR-808 Rhythm Composer. Selbständige Arbeit FMS - NMS Bern, Laurin Dietz, 2024</p>
+</article>
+
+    <script type="text/javascript">
+
+    const crossFade = new Tone.CrossFade(0.5).toDestination();
+    var inputA = new Tone.Player("iwannadancewithsomebody-Original.mp3").toDestination();
+    inputA.loop=true;
+
+    var inputB = new Tone.Player("./iwannadancewithsomebody-808Pattern.mp3").toDestination();
+    inputB.loop=true;
+
+    var play = document.getElementById('play');
+    var pause = document.getElementById('pause');
+
+    play.addEventListener("click",function(){
+      // connect two inputs Tone.to a/b
+      Tone.loaded().then(() => {
+        inputA.start();
+        inputB.start();
+      });
+
+      // use the fade to control the mix between the two
+    })
+    pause.addEventListener("click",function(){
+      // connect two inputs Tone.to a/b
+      inputA.stop();
+      inputB.stop();
+      // use the fade to control the mix between the two
+    })
+
+    // var vol = document.getElementById('volume');
+    // vol.addEventListener("input",function(e){
+    //   console.log(e.target.value/100);
+    //   crossFade.fade.value = e.target.value/100;
+    // })
+    // var volA = document.getElementById('volumeA');
+    // volA.addEventListener("input",function(e){
+    //   console.log(e.target.value);
+    //   inputA.volume.value = e.target.value;
+    // })
+    var volB = document.getElementById('volumeB');
+    volB.addEventListener("input",function(e){
+      console.log(e.target.value);
+      inputB.volume.value = e.target.value;
+      inputA.volume.value = -30 - e.target.value + 3
+    })
+
+    </script>
+  </body>
+</html>
