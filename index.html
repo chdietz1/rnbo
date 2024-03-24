@@ -48,7 +48,7 @@
 
     var vol = document.getElementById('volume');
     vol.addEventListener("input",function(e){
-      console.log(e.target.value);
+      console.log(e.target.value/100);
       crossFade.fade.value = e.target.value/100;
     })
 
