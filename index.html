@@ -26,16 +26,14 @@
 
     var inputB = new Tone.Player("./iwannadancewithsomebody-808Pattern.mp3").toDestination();
     inputB.connect(crossFade.b);
+
     var play = document.getElementById('play');
     var pause = document.getElementById('pause');
-
-
-
 
     play.addEventListener("click",function(){
       // connect two inputs Tone.to a/b
       Tone.loaded().then(() => {
-        inputA.start();
+        //inputA.start();
         inputB.start();
       });
 
