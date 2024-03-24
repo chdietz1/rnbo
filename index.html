@@ -14,7 +14,7 @@
       <button type="button" name="button" id="play">play</button>
       <button type="button" name="button" id="pause">pause</button>
       <input type="range" id="volume">
-      <input type="range" id="volumeA" min="-40" max="0">
+      <input type="range" id="volumeCrossfader" min="-40" max="0">
 
     <script type="text/javascript">
 
@@ -44,15 +44,16 @@
       // use the fade to control the mix between the two
     })
 
-    var vol = document.getElementById('volume');
-    vol.addEventListener("input",function(e){
-      console.log(e.target.value/100);
-      crossFade.fade.value = e.target.value/100;
-    })
-    var volA = document.getElementById('volumeA');
-    volA.addEventListener("input",function(e){
+    // var vol = document.getElementById('volume');
+    // vol.addEventListener("input",function(e){
+    //   console.log(e.target.value/100);
+    //   crossFade.fade.value = e.target.value/100;
+    // })
+    var volCF = document.getElementById('volumeCrossfader');
+    volCF.addEventListener("input",function(e){
       console.log(e.target.value);
       inputA.volume.value = e.target.value;
+      inputB.volume.value = -12 - e.target.value
     })
 
 
