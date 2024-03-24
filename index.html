@@ -59,6 +59,7 @@
     volB.addEventListener("input",function(e){
       console.log(e.target.value);
       inputB.volume.value = e.target.value;
+      inputA.volume.value = -40 - e.target.value
     })
 
     </script>
