@@ -17,12 +17,12 @@
 
     <script type="text/javascript">
 
-    const crossFade = new Tone.CrossFade().toDestination();
+    const crossFade = new Tone.CrossFade(0.5).toDestination();
     var inputA = new Tone.Player("iwannadancewithsomebody-Original.mp3").toDestination();
-    //inputA.connect(crossFade.a);
+    inputA.connect(crossFade.a, 0, 0);
 
     var inputB = new Tone.Player("./iwannadancewithsomebody-808Pattern.mp3").toDestination();
-    //inputB.connect(crossFade.b);
+    inputB.connect(crossFade.b, 0, 1);
 
     var play = document.getElementById('play');
     var pause = document.getElementById('pause');
@@ -30,10 +30,8 @@
     play.addEventListener("click",function(){
       // connect two inputs Tone.to a/b
       Tone.loaded().then(() => {
-        inputA.connect(crossFade.a).start();
-        //inputA.start();
-        inputB.connect(crossFade.b).start();
-        //inputB.start();
+        inputA.start();
+        inputB.start();
       });
 
       // use the fade to control the mix between the two
