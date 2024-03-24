@@ -32,8 +32,8 @@
     play.addEventListener("click",function(){
       // connect two inputs Tone.to a/b
       Tone.loaded().then(() => {
-        inputA.loop()=true;
-        inputB.loop()=true;
+        inputA.loop=true;
+        inputB.loop=true;
         inputA.start();
         inputB.start();
       });
