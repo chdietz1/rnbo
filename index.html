@@ -25,8 +25,8 @@
     var inputA = new Tone.Player("iwannadancewithsomebody-Original.mp3").toDestination();
     inputA.connect(crossFade.a);
 
-    //var inputB = new Tone.Player("./iwannadancewithsomebody-808Pattern.mp3").toDestination();
-    //inputB.connect(crossFade.b);
+    var inputB = new Tone.Player("./iwannadancewithsomebody-808Pattern.mp3").toDestination();
+    inputB.connect(crossFade.b);
     var play = document.getElementById('play');
     var pause = document.getElementById('pause');
 
@@ -37,7 +37,7 @@
       // connect two inputs Tone.to a/b
       Tone.loaded().then(() => {
         inputA.start();
-        //inputB.start();
+        inputB.start();
       });
 
       // use the fade to control the mix between the two
@@ -45,7 +45,7 @@
     pause.addEventListener("click",function(){
       // connect two inputs Tone.to a/b
       inputA.stop();
-      //inputB.stop();
+      inputB.stop();
       // use the fade to control the mix between the two
     })
 
