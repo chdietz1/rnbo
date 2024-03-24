@@ -13,7 +13,7 @@
   <body>
       <button type="button" name="button" id="play">play</button>
       <button type="button" name="button" id="pause">pause</button>
-      <input type="range" id="volume" min="-12" max="0">
+      <input type="range" id="volume">
 
     <script type="text/javascript">
 
@@ -47,8 +47,8 @@
 
     var vol = document.getElementById('volume');
     vol.addEventListener("input",function(e){
-      console.log(e.target.value);
-      crossFade.fade.value = e.target.value;
+      console.log(e.target.value/100);
+      crossFade.fade.value = e.target.value/100;
     })
 
 
