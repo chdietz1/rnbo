@@ -82,8 +82,8 @@
     var volB = document.getElementById('volumeB');
     volB.addEventListener("input",function(e){
       console.log(e.target.value);
-      inputB.volume.value = e.target.value;
-      inputA.volume.value = -30 - e.target.value + 3
+      inputB.volume.value = e.target.value + 2;
+      inputA.volume.value = -30 - e.target.value
     })
 
     </script>
