@@ -12,8 +12,8 @@
   </head>
   <body>
 <article data-theme="light">
-<h1>Whitney Houston - I Wanna Dance With Somebody</h1>
-<h2>Arista Records, 1987</h2>
+<h1>Marvin Gaye - Sexual Healing</h1>
+<h2>Columbia Records, 1982</h2>
 
 
       <!-- <input type="range" id="volume"> -->
@@ -21,9 +21,9 @@
 <table  width="100%">
 
   <tr>
-    <td><img src="./img/whitneySMALLdancewithsome_grande.png" width="300px"></td>
+    <td><img src="./img/marvin-gaye-1973-publicity-photo.jpg" width="300px"></td>
     <td><input type="range" id="volumeB" min="-30" max="0"><p align="center"><< slide >></p></td>
-    <td><img src="./img/iWannaDanceWithSomebody.png" width="400px" style="float: right;"></td>
+    <td><img src="./img/sexual_healing.png" width="400px" style="float: right;"></td>
   </tr>
   <tr>
     <td><h3 align="center">Original</h3></td>
@@ -44,10 +44,10 @@
     <script type="text/javascript">
 
     const crossFade = new Tone.CrossFade(0.5).toDestination();
-    var inputA = new Tone.Player("iwannadancewithsomebody-Original.mp3").toDestination();
+    var inputA = new Tone.Player("./Sexual_Healing_Original.mp3").toDestination();
     inputA.loop=true;
 
-    var inputB = new Tone.Player("./iwannadancewithsomebody-808Pattern.mp3").toDestination();
+    var inputB = new Tone.Player("./Sexual_Healing_808.mp3").toDestination();
     inputB.loop=true;
 
     var play = document.getElementById('play');
