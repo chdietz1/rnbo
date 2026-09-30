@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Übersicht{% endblock %}
+{% block content %}
+<h1>Übersicht</h1>
+
+<section class="card status {% if status.ok and status.model_ok %}ok{% else %}warn{% endif %}">
+  {% if not status.ok %}
+    <strong>Sprachmodell nicht erreichbar.</strong> {{ status.error }}<br>
+    Bitte prüfen, ob Ollama auf dem Server läuft (siehe Anleitung).
+  {% elif not status.model_ok %}
+    <strong>Modell «{{ status.model }}» ist nicht installiert.</strong>
+    Installierte Modelle: {{ status.models | join(", ") or "keine" }}.
+  {% else %}
+    Sprachmodell bereit: <strong>{{ status.model }}</strong>
+    {% if status.backend == "ollama" %}· Suche: {% if status.embed_ok %}semantisch ({{ status.embed_model }}){% else %}Stichworte{% endif %}{% endif %}
+  {% endif %}
+</section>
+
+<div class="grid2">
+  <section class="card">
+    <h2>Meine Schülerinnen &amp; Schüler</h2>
+    {% if students %}
+    <ul class="list">
+      {% for s in students %}
+      <li><a href="/students/{{ s.id }}">{{ s.last_name }} {{ s.first_name }}</a> <span class="muted">{{ s.class_name or "" }}</span>
+        <a class="small" href="/students/{{ s.id }}/generate">Bericht erstellen →</a></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>Noch keine Dossiers. <a href="/students">Jetzt erfassen</a>.</p>
+    {% endif %}
+  </section>
+  <section class="card">
+    <h2>Zuletzt bearbeitete Berichte</h2>
+    {% if reports %}
+    <ul class="list">
+      {% for r in reports %}
+      <li><a href="/reports/{{ r.id }}">{{ r.title }}</a> – {{ r.first_name }} {{ r.last_name }}
+        <span class="badge {{ r.status }}">{{ r.status }}</span> <span class="muted">{{ r.updated_at[:10] }}</span></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p>Noch keine Berichte.</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

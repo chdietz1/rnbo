@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Berichtsgenerator{% endblock %} – {{ school_name }}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/">Berichtsgenerator <small>{{ school_name }}</small></a>
+  {% if user %}
+  <nav>
+    <a href="/">Übersicht</a>
+    <a href="/students">Schülerinnen &amp; Schüler</a>
+    <a href="/knowledge">Wissensbasis</a>
+    {% if user.is_admin %}
+    <a href="/admin/users">Benutzer</a>
+    <a href="/admin/report-types">Berichtsarten</a>
+    <a href="/admin/audit">Protokoll</a>
+    {% endif %}
+    <a href="/account">{{ user.display_name }}</a>
+    <form method="post" action="/logout" class="inline">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="link">Abmelden</button>
+    </form>
+  </nav>
+  {% endif %}
+</header>
+<main>
+  {% if flash %}<div class="flash">{{ flash }}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+<footer>Läuft lokal im Schulnetz. Es werden keine Daten ins Internet übertragen. Generierte Texte sind Entwürfe und müssen von der Lehrperson geprüft werden.</footer>
+<meta name="csrf" content="{{ csrf }}">
+</body>
+</html>

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Wissensbasis{% endblock %}
+{% block content %}
+<h1>Wissensbasis</h1>
+<p>Hier liegen allgemeine Grundlagen, die bei jedem Bericht berücksichtigt werden: kantonale Vorgaben und Leitfäden zur Beurteilung (BKD Kanton Bern), Lehrplan&nbsp;21 (Auszüge), schulinterne Konzepte, anonymisierte Musterberichte. <strong>Keine Personendaten hier ablegen.</strong> Die Dokumente werden einmalig heruntergeladen und hier hochgeladen – das System greift nie aufs Internet zu.</p>
+<div class="grid2">
+  <section class="card">
+    <h2>Dokumente</h2>
+    {% if docs %}
+    <table>
+      <thead><tr><th>Titel</th><th>Art</th><th>Grösse</th><th></th></tr></thead>
+      <tbody>
+      {% for d in docs %}
+      <tr><td><a href="/documents/{{ d.id }}">{{ d.title }}</a></td><td>{{ d.doc_type }}</td>
+        <td>{{ (d.size / 1000) | round(1) }}k Zeichen</td>
+        <td>{% if user.is_admin %}<form method="post" action="/documents/{{ d.id }}/delete" class="inline" data-confirm="Dokument löschen?">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><button class="link danger">löschen</button></form>{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p>Noch keine Dokumente.</p>{% endif %}
+  </section>
+  {% if user.is_admin %}
+  <section class="card">
+    <h2>Dokument hinzufügen</h2>
+    <form method="post" action="/knowledge" enctype="multipart/form-data">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label>Datei (PDF, Word .docx, TXT, RTF) <input type="file" name="file" accept=".pdf,.docx,.txt,.md,.rtf"></label>
+      <label>… oder Text einfügen <textarea name="text" rows="4"></textarea></label>
+      <label>Titel <input name="title"></label>
+      <label>Art <select name="doc_type">{% for t in kb_types %}<option>{{ t }}</option>{% endfor %}</select></label>
+      <button>Hinzufügen</button>
+    </form>
+    <form method="post" action="/knowledge/reindex" data-confirm="Alle Dokumente neu indexieren? Das kann einige Minuten dauern.">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="secondary">Alles neu indexieren</button>
+    </form>
+    <p class="muted">Neu indexieren ist nötig, wenn das Embedding-Modell nachträglich installiert oder gewechselt wurde.</p>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

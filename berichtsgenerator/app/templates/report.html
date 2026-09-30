@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ report.title }}{% endblock %}
+{% block content %}
+<p><a href="/students/{{ student.id }}">← {{ student.first_name }} {{ student.last_name }}</a></p>
+<h1>{{ report.title }} <span class="badge {{ report.status }}">{{ report.status }}</span></h1>
+<p class="muted">Erstellt von {{ authors.created or "?" }} am {{ report.created_at[:10] }} · zuletzt geändert von {{ authors.updated or "?" }} am {{ report.updated_at[:16].replace("T", " ") }}</p>
+
+<div class="grid2 wide-left">
+  <section class="card">
+    <form method="post" action="/reports/{{ report.id }}" id="report-form">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div class="row">
+        <label class="grow">Titel <input name="title" value="{{ report.title }}" required></label>
+        <label>Periode <input name="period" value="{{ report.period or '' }}"></label>
+      </div>
+      <textarea name="content" id="output" rows="32" class="editor">{{ report.content }}</textarea>
+      <div class="row">
+        <button name="finalize" value="0">Speichern</button>
+        {% if report.status != "final" %}
+        <button name="finalize" value="1" class="secondary" data-confirm="Bericht finalisieren? Er wird dann als Grundlage für künftige Berichte abgelegt.">Speichern &amp; finalisieren</button>
+        {% endif %}
+        <a class="button secondary" href="/reports/{{ report.id }}/docx">Als Word exportieren</a>
+      </div>
+    </form>
+    <form method="post" action="/reports/{{ report.id }}/delete" data-confirm="Bericht wirklich löschen?">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><button class="link danger">Bericht löschen</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Überarbeiten mit KI</h2>
+    <p class="muted">Markieren Sie eine Textstelle im Editor (sonst wird der ganze Text überarbeitet). Das Ergebnis erscheint unten und kann übernommen werden.</p>
+    <div class="buttons">
+      {% for key, label in [("kuerzer","Kürzer"),("ausfuehrlicher","Ausführlicher"),("einfach","Einfache Sprache"),("sachlich","Sachlicher"),("ressourcen","Ressourcenorientierter"),("korrektur","Nur Rechtschreibung")] %}
+      <button type="button" class="secondary revise" data-action="{{ key }}">{{ label }}</button>
+      {% endfor %}
+    </div>
+    <label>Eigene Anweisung <input id="revise-instruction" placeholder="z.B. Absatz über Mathematik ergänzen um Förderziel"></label>
+    <button type="button" class="secondary revise" data-action="">Mit eigener Anweisung überarbeiten</button>
+    <p class="muted" id="gen-status"></p>
+    <textarea id="revise-output" rows="14" class="editor" placeholder="Vorschlag …"></textarea>
+    <button type="button" id="revise-apply">Vorschlag übernehmen</button>
+    {% if report.observations %}
+    <details><summary>Ursprüngliche Beobachtungen</summary><pre class="doctext">{{ report.observations }}</pre></details>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

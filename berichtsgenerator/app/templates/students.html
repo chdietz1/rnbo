@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Schülerinnen & Schüler{% endblock %}
+{% block content %}
+<h1>Schülerinnen &amp; Schüler</h1>
+<div class="grid2">
+  <section class="card">
+    <h2>Dossiers</h2>
+    {% if students %}
+    <table>
+      <thead><tr><th>Name</th><th>Klasse/Stufe</th><th>Jahrgang</th><th></th></tr></thead>
+      <tbody>
+      {% for s in students %}
+        <tr><td><a href="/students/{{ s.id }}">{{ s.last_name }} {{ s.first_name }}</a></td>
+            <td>{{ s.class_name or "" }}</td><td>{{ s.birth_year or "" }}</td>
+            <td><a href="/students/{{ s.id }}/generate">Bericht erstellen</a></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p>Keine Dossiers vorhanden oder freigegeben.</p>{% endif %}
+  </section>
+  <section class="card">
+    <h2>Neues Dossier</h2>
+    <form method="post" action="/students">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label>Vorname <input name="first_name" required></label>
+      <label>Nachname <input name="last_name" required></label>
+      <label>Jahrgang <input name="birth_year" placeholder="z.B. 2015"></label>
+      <label>Klasse/Stufe <input name="class_name" placeholder="z.B. Mittelstufe, Klasse B"></label>
+      <label>Notizen (intern) <textarea name="notes" rows="3"></textarea></label>
+      <button>Erstellen</button>
+    </form>
+    <p class="muted">Sie erhalten automatisch Zugriff. Weitere Lehrpersonen können im Dossier freigegeben werden.</p>
+  </section>
+</div>
+{% endblock %}

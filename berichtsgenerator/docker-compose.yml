@@ -1,0 +1,38 @@
+# Variante mit Docker: Ollama + Berichtsgenerator.
+# Ollama ist nur intern erreichbar, nicht aus dem Schulnetz.
+services:
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama:/root/.ollama
+    environment:
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_KEEP_ALIVE=30m
+    # Für NVIDIA-Grafikkarten (nvidia-container-toolkit nötig).
+    # Ohne Grafikkarte diesen deploy-Block entfernen.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on: [ollama]
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - BG_OLLAMA_URL=http://ollama:11434
+      - BG_DATA_DIR=/data
+    volumes:
+      - ./data:/data
+
+volumes:
+  ollama:

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Protokoll{% endblock %}
+{% block content %}
+<h1>Zugriffsprotokoll</h1>
+<p class="muted">Die letzten 500 Einträge. Hält fest, wer wann welche Dossiers angesehen, bearbeitet oder exportiert hat.</p>
+<section class="card">
+  <table>
+    <thead><tr><th>Zeit</th><th>Person</th><th>Aktion</th><th>Details</th></tr></thead>
+    <tbody>
+    {% for e in entries %}
+    <tr><td>{{ e.ts.replace("T", " ") }}</td><td>{{ e.username or "–" }}</td><td>{{ e.action }}</td><td>{{ e.detail or "" }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

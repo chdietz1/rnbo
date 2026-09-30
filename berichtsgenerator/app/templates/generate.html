@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Bericht erstellen{% endblock %}
+{% block content %}
+<p><a href="/students/{{ student.id }}">← {{ student.first_name }} {{ student.last_name }}</a></p>
+<h1>Bericht erstellen: {{ student.first_name }} {{ student.last_name }}</h1>
+
+<div class="grid2 wide-right">
+  <section class="card">
+    <form id="gen-form" data-student="{{ student.id }}">
+      <label>Berichtsart
+        <select name="report_type_id" id="report_type">
+          {% for t in types %}<option value="{{ t.id }}" title="{{ t.description }}">{{ t.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Periode / Datum <input name="period" placeholder="z.B. 1. Semester 2025/26"></label>
+      <label>Aktuelle Beobachtungen und Stichworte
+        <textarea name="observations" rows="10" placeholder="- Liest kurze Texte mit Silbenunterstützung selbstständig&#10;- Zahlenraum bis 100: Addition ohne Übertrag sicher&#10;- Sucht in der Pause vermehrt Kontakt zu Mitschülern&#10;- Förderziel Konzentration: arbeitet 15 Min. selbstständig"></textarea>
+      </label>
+      <label>Zusätzliche Anweisungen (optional)
+        <textarea name="extra" rows="3" placeholder="z.B. Schwerpunkt auf Kommunikation legen; max. 2 Seiten"></textarea>
+      </label>
+      <fieldset>
+        <legend>Unterlagen einbeziehen</legend>
+        {% for d in docs %}
+        <label class="check"><input type="checkbox" name="document_ids" value="{{ d.id }}" checked>
+          {{ d.title }} <span class="muted">({{ d.doc_type }}{% if d.doc_date %}, {{ d.doc_date }}{% endif %})</span></label>
+        {% else %}
+        <p class="muted">Keine Unterlagen vorhanden. <a href="/students/{{ student.id }}">Frühere Berichte hochladen</a> verbessert die Ergebnisse deutlich.</p>
+        {% endfor %}
+        <label class="check"><input type="checkbox" name="use_kb" checked> Wissensbasis (kantonale Grundlagen, Leitfäden) verwenden</label>
+      </fieldset>
+      <button type="submit" id="gen-btn">Text generieren</button>
+      <button type="button" id="stop-btn" class="secondary" hidden>Abbrechen</button>
+      <p class="muted" id="gen-status"></p>
+    </form>
+  </section>
+
+  <section class="card">
+    <form method="post" action="/students/{{ student.id }}/reports" id="save-form">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="report_type_id">
+      <input type="hidden" name="period">
+      <input type="hidden" name="observations">
+      <label>Titel <input name="title" placeholder="wird aus der Berichtsart übernommen"></label>
+      <label>Entwurf (kann direkt bearbeitet werden)
+        <textarea name="content" id="output" rows="28" class="editor"></textarea>
+      </label>
+      <button id="save-btn">Als Entwurf speichern</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

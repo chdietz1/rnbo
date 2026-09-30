@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}{{ student.first_name }} {{ student.last_name }}{% endblock %}
+{% block content %}
+<h1>{{ student.first_name }} {{ student.last_name }}
+  <span class="muted">{{ student.class_name or "" }}{% if student.birth_year %} · Jg. {{ student.birth_year }}{% endif %}</span></h1>
+<p><a class="button" href="/students/{{ student.id }}/generate">Neuen Bericht erstellen</a></p>
+
+<div class="grid2">
+  <section class="card">
+    <h2>Berichte</h2>
+    {% if reports %}
+    <table>
+      <thead><tr><th>Titel</th><th>Periode</th><th>Status</th><th>Geändert</th></tr></thead>
+      <tbody>
+      {% for r in reports %}
+      <tr><td><a href="/reports/{{ r.id }}">{{ r.title }}</a></td><td>{{ r.period or "" }}</td>
+          <td><span class="badge {{ r.status }}">{{ r.status }}</span></td><td>{{ r.updated_at[:10] }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p>Noch keine Berichte.</p>{% endif %}
+
+    <h2>Unterlagen (frühere Berichte, Förderpläne …)</h2>
+    {% if docs %}
+    <table>
+      <thead><tr><th>Titel</th><th>Art</th><th>Datum</th><th></th></tr></thead>
+      <tbody>
+      {% for d in docs %}
+      <tr><td><a href="/documents/{{ d.id }}">{{ d.title }}</a></td><td>{{ d.doc_type }}</td><td>{{ d.doc_date or "" }}</td>
+        <td><form method="post" action="/documents/{{ d.id }}/delete" class="inline" data-confirm="Dokument wirklich löschen?">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><button class="link danger">löschen</button></form></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p>Noch keine Unterlagen hochgeladen.</p>{% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Unterlage hinzufügen</h2>
+    <form method="post" action="/students/{{ student.id }}/documents" enctype="multipart/form-data">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label>Datei (PDF, Word .docx, TXT, RTF) <input type="file" name="file" accept=".pdf,.docx,.txt,.md,.rtf"></label>
+      <label>… oder Text einfügen <textarea name="text" rows="4"></textarea></label>
+      <label>Titel <input name="title" placeholder="z.B. Beurteilungsbericht 1. Semester 2025/26"></label>
+      <label>Art <select name="doc_type">{% for t in doc_types %}<option>{{ t }}</option>{% endfor %}</select></label>
+      <label>Datum <input type="date" name="doc_date"></label>
+      <button>Hochladen</button>
+    </form>
+
+    <h2>Zugriff</h2>
+    <ul class="list">
+      {% for m in members %}
+      <li>{{ m.display_name }} <span class="muted">({{ m.username }})</span>
+        <form method="post" action="/students/{{ student.id }}/members" class="inline" data-confirm="Zugriff entziehen?">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="user_id" value="{{ m.id }}">
+          <input type="hidden" name="action" value="remove"><button class="link danger">entfernen</button></form></li>
+      {% endfor %}
+    </ul>
+    <form method="post" action="/students/{{ student.id }}/members" class="row">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <select name="user_id">{% for u in all_users %}<option value="{{ u.id }}">{{ u.display_name }}</option>{% endfor %}</select>
+      <button>Freigeben</button>
+    </form>
+
+    <details>
+      <summary>Stammdaten bearbeiten</summary>
+      <form method="post" action="/students/{{ student.id }}/edit">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label>Vorname <input name="first_name" value="{{ student.first_name }}" required></label>
+        <label>Nachname <input name="last_name" value="{{ student.last_name }}" required></label>
+        <label>Jahrgang <input name="birth_year" value="{{ student.birth_year or '' }}"></label>
+        <label>Klasse/Stufe <input name="class_name" value="{{ student.class_name or '' }}"></label>
+        <label>Notizen (intern) <textarea name="notes" rows="3">{{ student.notes or '' }}</textarea></label>
+        <button>Speichern</button>
+      </form>
+    </details>
+
+    {% if user.is_admin %}
+    <details>
+      <summary class="danger">Dossier löschen</summary>
+      <p>Löscht das Dossier mit allen Unterlagen und Berichten unwiderruflich (z.B. nach Ablauf der Aufbewahrungsfrist).</p>
+      <form method="post" action="/students/{{ student.id }}/delete">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label>Zur Bestätigung Nachname eingeben <input name="confirm" required></label>
+        <button class="danger">Endgültig löschen</button>
+      </form>
+    </details>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
