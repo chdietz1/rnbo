@@ -86,6 +86,9 @@ def main(argv=None) -> int:
             if user:
                 print("Demo-Daten sind bereits vorhanden.")
                 return 0
+            if conn.execute("SELECT 1 FROM users LIMIT 1").fetchone():
+                print("Es gibt bereits Benutzerkonten. Es werden keine Demo-Daten angelegt.")
+                return 0
             cur = conn.execute(
                 "INSERT INTO users (username, display_name, pw_hash, is_admin, created_at) VALUES (?, ?, ?, 1, ?)",
                 (DEMO_USER, "Demo Lehrperson", auth.hash_password(DEMO_PASSWORD), db.now()),

@@ -11,22 +11,28 @@ from fastapi import HTTPException, Request
 
 from . import db
 
-_N, _R, _P = 2**14, 8, 1
+# PBKDF2-SHA256 ist in jedem Python vorhanden (scrypt fehlt z.B. im vorinstallierten Python auf macOS)
+_ITERATIONS = 600_000
 
 
 def hash_password(password: str) -> str:
     salt = secrets.token_bytes(16)
-    h = hashlib.scrypt(password.encode(), salt=salt, n=_N, r=_R, p=_P)
-    return f"scrypt${salt.hex()}${h.hex()}"
+    h = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, _ITERATIONS)
+    return f"pbkdf2_sha256${_ITERATIONS}${salt.hex()}${h.hex()}"
 
 
 def verify_password(password: str, stored: str) -> bool:
+    parts = stored.split("$")
     try:
-        _, salt_hex, hash_hex = stored.split("$")
+        if parts[0] == "pbkdf2_sha256" and len(parts) == 4:
+            h = hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(parts[2]), int(parts[1]))
+        elif parts[0] == "scrypt" and len(parts) == 3 and hasattr(hashlib, "scrypt"):
+            h = hashlib.scrypt(password.encode(), salt=bytes.fromhex(parts[1]), n=2**14, r=8, p=1)
+        else:
+            return False
     except ValueError:
         return False
-    h = hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt_hex), n=_N, r=_R, p=_P)
-    return hmac.compare_digest(h.hex(), hash_hex)
+    return hmac.compare_digest(h.hex(), parts[-1])
 
 
 def validate_new_password(password: str) -> str | None:

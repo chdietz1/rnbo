@@ -58,10 +58,8 @@ if [ ! -d .venv ]; then
     || { echo "Installation fehlgeschlagen."; rm -rf .venv; pause; exit 1; }
 fi
 
-# 6. Beispieldaten beim ersten Start
-if [ ! -f data/berichte.sqlite3 ]; then
-  .venv/bin/python -m app.cli demo
-fi
+# 6. Beispieldaten (nur solange noch kein Konto existiert)
+.venv/bin/python -m app.cli demo || { echo "Demo-Daten konnten nicht angelegt werden."; pause; exit 1; }
 
 echo
 echo "Läuft auf http://localhost:8000"
