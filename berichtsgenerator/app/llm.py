@@ -1,4 +1,6 @@
 """Anbindung an das lokale Sprachmodell (Ollama). Es werden keine Daten ins Internet gesendet."""
+from __future__ import annotations
+
 import json
 from typing import AsyncIterator
 

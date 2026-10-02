@@ -47,6 +47,24 @@ Die Textqualität und Geschwindigkeit hängen vor allem von der Grafikkarte bzw.
 Modelle entwickeln sich schnell. Am besten zwei, drei Modelle mit anonymisierten Beispieldaten
 vergleichen und das beste in `.env` eintragen. Deutsch, und zwar ohne «ß», ist das wichtigste Kriterium.
 
+## Schnellstart auf einem Mac (zum Ausprobieren)
+
+Voraussetzung: [Ollama](https://ollama.com/download) ist installiert. Für einen Mac mit 16 GB ist das
+Modell `gemma3:12b` mit verkürztem Kontext voreingestellt.
+
+1. ZIP entpacken.
+2. Rechtsklick auf **`start-mac.command`** → **Öffnen** → nochmals **Öffnen** bestätigen
+   (macOS fragt das beim ersten Mal, weil die Datei aus dem Internet stammt).
+   Alternativ im Terminal: `bash start-mac.command`
+3. Beim ersten Start werden das Sprachmodell (ca. 8 GB) und die Python-Pakete heruntergeladen.
+   Das dauert je nach Internetverbindung 10–30 Minuten. Fehlt Python, öffnet sich die Download-Seite.
+4. Der Browser öffnet `http://localhost:8000`. Anmelden mit **demo** / **demo-passwort**.
+   Eine erfundene Beispielschülerin «Lina Beispiel» mit drei Unterlagen ist bereits angelegt.
+
+Für den Test ist die App nur auf diesem Mac erreichbar. Andere Programme möglichst schliessen,
+damit das Modell genug Arbeitsspeicher hat. Ist es zu langsam, in der Datei `.env`
+`BG_MODEL=gemma3:4b` eintragen (schneller, aber schwächere Texte).
+
 ## 2. Installation (einmalig, mit Internet)
 
 Für die Installation braucht es **einmal** Internet (Programme und Modelle herunterladen).
@@ -60,7 +78,7 @@ Danach kann der Rechner vom Internet getrennt werden.
    ollama pull gemma3:12b
    ollama pull bge-m3
    ```
-3. **Python 3.11+** installieren (<https://www.python.org>, bei Windows «Add to PATH» ankreuzen).
+3. **Python 3.9 oder neuer** installieren (<https://www.python.org>, bei Windows «Add to PATH» ankreuzen).
 4. Diesen Ordner auf den Rechner kopieren, `.env.example` nach `.env` kopieren und den Schulnamen eintragen.
 5. Starten:
    - Windows: Doppelklick auf `start.bat`
@@ -135,6 +153,9 @@ python -m app.cli backup D:\Sicherung
 # Passwort zurücksetzen / Benutzer auf der Kommandozeile anlegen
 python -m app.cli reset-password admin
 python -m app.cli create-user mmuster "Maria Muster" --admin
+
+# Testkonto «demo» mit erfundenen Beispieldaten anlegen
+python -m app.cli demo
 ```
 
 (Unter Windows vorher `.venv\Scripts\activate`, unter Linux `source .venv/bin/activate` ausführen.)

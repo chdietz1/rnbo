@@ -1,4 +1,6 @@
 """SQLite-Datenbank: Schema und kleine Hilfsfunktionen."""
+from __future__ import annotations
+
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime

@@ -1,4 +1,6 @@
 """Export eines Berichts als Word-Datei (.docx)."""
+from __future__ import annotations
+
 import io
 import re
 

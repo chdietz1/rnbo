@@ -10,6 +10,7 @@ Standortgespräche, Lehrplan 21 inkl. überfachlicher Kompetenzen). Bitte mit
 den aktuell gültigen Vorgaben der BKD und des eigenen Schulkonzepts
 abgleichen und bei Bedarf anpassen.
 """
+from __future__ import annotations
 
 SYSTEM_PROMPT = """Du bist eine erfahrene schulische Heilpädagogin bzw. ein erfahrener schulischer Heilpädagoge an einer Schule der besonderen Volksschule (Sonderschule) im Kanton Bern. Du unterstützt Lehrpersonen beim Verfassen von Berichten über Schülerinnen und Schüler.
 

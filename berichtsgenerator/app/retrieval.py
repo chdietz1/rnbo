@@ -4,6 +4,8 @@
   zuerst) übergeben; sonst die relevantesten Abschnitte.
 - Wissensbasis: die relevantesten Abschnitte (Embeddings, sonst Stichwortsuche).
 """
+from __future__ import annotations
+
 import math
 import re
 from collections import Counter

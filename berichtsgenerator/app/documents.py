@@ -1,4 +1,6 @@
 """Textextraktion aus hochgeladenen Dateien, Aufteilung in Abschnitte und Indexierung."""
+from __future__ import annotations
+
 import io
 import re
 import struct
