@@ -30,6 +30,9 @@
       <button>Erstellen</button>
     </form>
     <p class="muted">Sie erhalten automatisch Zugriff. Weitere Lehrpersonen können im Dossier freigegeben werden.</p>
+    {% if user.is_admin %}
+    <p><a class="button secondary" href="/admin/import">Mehrere Dossiers aus Excel/CSV importieren</a></p>
+    {% endif %}
   </section>
 </div>
 {% endblock %}

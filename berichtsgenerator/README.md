@@ -119,6 +119,9 @@ Die anderen Lehrpersonen öffnen `http://<IP-des-Rechners>:8000`, z.B. `http://1
    In der Wissensbasis **keine Personendaten** ablegen.
 3. Unter **Berichtsarten** Aufbau und Formulierungen an die Vorlagen der Schule anpassen.
 4. Pro Kind ein **Dossier** anlegen, alte Berichte hochladen und Kolleginnen/Kollegen freigeben.
+   Viele Kinder auf einmal: «Schülerinnen & Schüler» → **«Mehrere Dossiers aus Excel/CSV importieren»**
+   (nur Admin). Eine Liste mit den Spalten Vorname, Nachname, Jahrgang, Klasse und optional Lehrpersonen
+   (Benutzernamen) legt alle Dossiers samt Freigaben an. Die Lehrpersonen laden danach die Unterlagen hoch.
 5. **Bericht erstellen**: Berichtsart wählen, Beobachtungen stichwortartig eintragen, generieren, überarbeiten, speichern, finalisieren, als Word exportieren.
 
 **Tipps für gute Ergebnisse**

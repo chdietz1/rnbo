@@ -101,3 +101,40 @@ def test_chunking():
     chunks = documents.chunk_text(text)
     assert len(chunks) > 3
     assert all(len(ch) <= documents.CHUNK_SIZE + 10 for ch in chunks)
+
+
+def test_bulk_import():
+    import openpyxl
+
+    with TestClient(app) as c:
+        login(c, "admin", "geheim12345")
+        token = csrf(c, "/admin/import")
+
+        # Excel mit Jahrgang als Zahl und Zugriff für «lp»
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(["Vorname", "Nachname", "Jahrgang", "Klasse", "Lehrpersonen"])
+        ws.append(["Noah", "Import", 2018, "U1", "lp, unbekannt"])
+        ws.append(["", "OhneVorname", 2017, "U1", ""])
+        buf = io.BytesIO()
+        wb.save(buf)
+        r = c.post("/admin/import", data={"csrf": token},
+                   files={"file": ("liste.xlsx", buf.getvalue(), "application/octet-stream")})
+        assert "1 Dossier(s) angelegt" in r.text
+        assert "Zeile 3" in r.text and "unbekannt" in r.text
+
+        # CSV (Excel-Export mit Semikolon, Windows-Kodierung), Noah ist ein Duplikat
+        csv_data = "Vorname;Nachname;Jahrgang;Klasse\nNoah;Import;2018;U1\nZoé;Müller;2016;M1\n".encode("cp1252")
+        r = c.post("/admin/import", data={"csrf": token},
+                   files={"file": ("liste.csv", csv_data, "text/csv")})
+        assert "1 Dossier(s) angelegt" in r.text and "1 bereits vorhanden" in r.text
+        assert "Müller" in c.get("/students").text
+
+        assert c.get("/admin/import/vorlage.csv").status_code == 200
+
+        # Lehrperson «lp» sieht Noah, aber nicht Zoé, und darf nicht importieren
+        c.post("/logout", data={"csrf": token})
+        login(c, "lp", "passwort1234")
+        page = c.get("/students").text
+        assert "Import Noah" in page and "Müller" not in page
+        assert c.get("/admin/import").status_code == 403

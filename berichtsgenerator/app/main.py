@@ -20,7 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import auth, config, db, documents, llm, prompts, retrieval
+from . import auth, config, db, documents, importer, llm, prompts, retrieval
 from .auth import LoginRequired, check_csrf, require_admin, require_user
 from .export import report_to_docx
 
@@ -266,6 +266,42 @@ async def students_create(request: Request):
         conn.execute("INSERT INTO student_users (student_id, user_id) VALUES (?, ?)", (sid, user["id"]))
         db.audit(conn, user, "schueler_erstellt", f"id={sid}")
     return redirect(f"/students/{sid}")
+
+
+@app.get("/admin/import", response_class=HTMLResponse)
+def import_page(request: Request):
+    require_admin(request)
+    return render(request, "import.html", {"columns": importer.COLUMNS})
+
+
+@app.get("/admin/import/vorlage.csv")
+def import_template(request: Request):
+    require_admin(request)
+    return Response(
+        importer.TEMPLATE_CSV.encode("utf-8-sig"),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=Vorlage_Schuelerliste.csv"},
+    )
+
+
+@app.post("/admin/import")
+async def import_submit(request: Request):
+    admin = require_admin(request)
+    form = await form_data(request)
+    upload = form.get("file")
+    if upload is None or not getattr(upload, "filename", ""):
+        return render(request, "import.html", {"columns": importer.COLUMNS, "error": "Bitte eine Datei auswählen."})
+    data = await upload.read()
+    if len(data) > config.MAX_UPLOAD_MB * 1024 * 1024:
+        return render(request, "import.html", {"columns": importer.COLUMNS, "error": "Die Datei ist zu gross."})
+    try:
+        students, errors = await run_in_threadpool(importer.parse_students, upload.filename, data)
+    except importer.ImportError_ as e:
+        return render(request, "import.html", {"columns": importer.COLUMNS, "error": str(e)})
+    with db.get_conn() as conn:
+        result = importer.import_students(conn, students, admin)
+    result["messages"] = errors + result["messages"]
+    return render(request, "import.html", {"columns": importer.COLUMNS, "result": result})
 
 
 @app.get("/students/{sid}", response_class=HTMLResponse)

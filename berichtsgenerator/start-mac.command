@@ -51,11 +51,14 @@ if ! curl -s http://127.0.0.1:11434/api/tags | grep -q "\"$MODEL\""; then
   fi
 fi
 
-# 5. Python-Umgebung einrichten (einmalig)
+# 5. Python-Umgebung einrichten (einmalig) und nach Updates fehlende Pakete ergänzen
 if [ ! -d .venv ]; then
   echo "Richte Python-Umgebung ein (einmalig) …"
   "$PY" -m venv .venv && .venv/bin/pip install -q --upgrade pip && .venv/bin/pip install -q -r requirements.txt \
     || { echo "Installation fehlgeschlagen."; rm -rf .venv; pause; exit 1; }
+else
+  .venv/bin/pip install -q -r requirements.txt 2>/dev/null \
+    || echo "Hinweis: Pakete konnten nicht aktualisiert werden (kein Internet?). Die App startet trotzdem."
 fi
 
 # 6. Beispieldaten (nur solange noch kein Konto existiert)
