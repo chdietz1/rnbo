@@ -15,15 +15,20 @@ document.addEventListener("click", (e) => {
 let controller = null;
 
 // Zeigt an, aus welchen Wissensbasis-Dokumenten Abschnitte ans Modell gingen
-function showSources(header) {
+function showSources(header, promptTokens, ctxTokens) {
   const el = document.getElementById("sources");
   if (!el || header === null) return;
   let sources = {};
   try { sources = JSON.parse(decodeURIComponent(header)); } catch (_) { return; }
   const parts = Object.entries(sources).map(([title, n]) => `${title} (${n} ${n === 1 ? "Abschnitt" : "Abschnitte"})`);
-  el.textContent = parts.length
-    ? "Verwendete Grundlagen: " + parts.join(", ")
+  let text = parts.length
+    ? "Verwendete Grundlagen: " + parts.join(", ") + "."
     : "Aus der Wissensbasis wurde nichts Passendes gefunden.";
+  if (promptTokens && ctxTokens) {
+    const fmt = (n) => Number(n).toLocaleString("de-CH");
+    text += ` Umfang der Anfrage: ca. ${fmt(promptTokens)} von ${fmt(ctxTokens)} Tokens.`;
+  }
+  el.textContent = text;
 }
 
 async function streamInto(url, body, target, statusEl) {
@@ -43,7 +48,7 @@ async function streamInto(url, body, target, statusEl) {
       try { msg = (await res.json()).error || msg; } catch (_) {}
       throw new Error(msg);
     }
-    showSources(res.headers.get("X-KB-Sources"));
+    showSources(res.headers.get("X-KB-Sources"), res.headers.get("X-Prompt-Tokens"), res.headers.get("X-Context-Tokens"));
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     for (;;) {

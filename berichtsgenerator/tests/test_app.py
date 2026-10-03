@@ -217,3 +217,16 @@ def test_kb_selection_and_fair_share():
                    json={"student_id": sid, "report_type_id": rt_id, "kb_ids": []})
         assert json.loads(unquote(r.headers["X-KB-Sources"])) == {}
         assert "Enthält Grundlagen: nein" in r.text
+
+
+def test_long_instructions_shrink_document_budget():
+    from app import config, prompts, retrieval
+
+    short_s, short_kb = retrieval.budgets(len(prompts.SYSTEM_PROMPT) + 600)
+    long_s, long_kb = retrieval.budgets(len(prompts.SYSTEM_PROMPT) + 600 + 9000)  # langer Skill
+    assert long_s < short_s and long_kb < short_kb
+    # Feste Teile + Unterlagen + Antwortreserve passen ins Kontextfenster
+    fixed = len(prompts.SYSTEM_PROMPT) + 600 + 9000
+    s, kb = retrieval.budgets(fixed)
+    total_tokens = (fixed + s + kb) // retrieval.CHARS_PER_TOKEN + retrieval.ANSWER_RESERVE_TOKENS
+    assert total_tokens <= config.NUM_CTX

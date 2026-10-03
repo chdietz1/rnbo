@@ -81,10 +81,21 @@ def rank_chunks(query: str, chunks: list[dict]) -> list[tuple[float, dict]]:
     return scored
 
 
-def budgets() -> tuple[int, int]:
-    """Zeichenbudget für (Unterlagen zum Kind, Wissensbasis)."""
-    usable_tokens = max(config.NUM_CTX - 3500, 1500)  # Reserve für Prompt + Antwort
-    chars = usable_tokens * 3
+CHARS_PER_TOKEN = 3  # vorsichtige Schätzung für deutschen Text
+ANSWER_RESERVE_TOKENS = 2000  # Platz für den generierten Text
+
+
+def estimate_tokens(text: str) -> int:
+    return len(text) // CHARS_PER_TOKEN + 1
+
+
+def budgets(fixed_chars: int = 4500) -> tuple[int, int]:
+    """Zeichenbudget für (Unterlagen zum Kind, Wissensbasis).
+
+    fixed_chars: Länge der festen Teile der Anfrage (Systemprompt, Auftrag, Stichworte, Skills).
+    Sie werden vom Kontextfenster abgezogen, damit die Anfrage nicht abgeschnitten wird."""
+    chars = (config.NUM_CTX - ANSWER_RESERVE_TOKENS) * CHARS_PER_TOKEN - fixed_chars
+    chars = max(chars, 1500)
     return int(chars * 0.7), int(chars * 0.3)
 
 

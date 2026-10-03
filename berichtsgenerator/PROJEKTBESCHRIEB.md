@@ -116,6 +116,9 @@ Die Projektleitung arbeitet nicht mit GitHub; Übergabe immer als **ZIP-Datei**.
   Standardtext «Allgemeine Anmerkungen»), «Zeitplan Beurteilungsberichte», «Befähigungsbereiche und deren Inhalte» (PDF).
   Mit 8192 Tokens Kontext passen nur ca. 4'000 Zeichen Wissensbasis pro Bericht; der Standardtext wird gefunden,
   die Befähigungsbereiche nicht immer. Grösserer Rechner/Kontext hilft.
+- Skill «Ausblick Befähigungsschwerpunkte (WOZU / WAS / WO)» mit Befähigungskatalog im Originalwortlaut
+  (ca. 8'500 Zeichen). Bei 8192 Tokens bleiben damit nur ca. 4'500 Zeichen für Unterlagen → Empfehlung
+  BG_NUM_CTX=16384, falls der Mac genug Speicher hat.
 - Offizielles Formular «Förderbericht besonderes Volksschulangebot 7./8./9. Schuljahr» (BU21/2023.01,
   Ansichtsexemplar) erhalten; die Berichtsart «Förderbericht (Felder für BU21 / BE-Login)» folgt genau seinen
   Feldern (Allgemeine Anmerkungen, Fachliche Kompetenzen pro Fach, Personale/Soziale/Methodische Kompetenzen mit
@@ -193,3 +196,4 @@ Netzwerkkabel, feste IP, USV, verschlüsselte Backups, abschliessbarer Standort,
 6. Sammel-Import von Dossiers aus Excel/CSV
 7. Häkchen-Erkennung, Abgleich mit leeren Vorlagen, Skills, Berichtsart «Förderbericht BU21»
 8. Skills-Seite mit sichtbaren Knöpfen; Wissensbasis-Auswahl mit fairer Platzverteilung und Quellenanzeige (LP21-Bezug kam vorher nicht beim Modell an)
+9. Platzberechnung zieht die Länge von Auftrag, Stichworten und Skills ab (vorher lief die Anfrage bei langen Skills über das Kontextfenster); Anzeige «Umfang der Anfrage: ca. X von Y Tokens»

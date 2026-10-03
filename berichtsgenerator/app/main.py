@@ -623,7 +623,9 @@ async def api_generate(request: Request):
             else:
                 allowed = set()
             query = f"{rt['name']}\n{rt['instructions']}\n{body.get('observations', '')}\n{body.get('extra', '')}"
-            s_budget, kb_budget = retrieval.budgets()
+            fixed = (len(prompts.SYSTEM_PROMPT) + len(rt["instructions"]) + len(str(body.get("observations", "")))
+                     + len(str(body.get("extra", ""))) + 600)
+            s_budget, kb_budget = retrieval.budgets(fixed)
             student_ctx = retrieval.build_student_context(conn, sorted(allowed), query, s_budget)
             kb_ids = [int(x) for x in body["kb_ids"]] if "kb_ids" in body else None
             kb_ctx, kb_sources = ("", {})
@@ -639,6 +641,9 @@ async def api_generate(request: Request):
 
     messages, kb_sources = await run_in_threadpool(prepare)
     response = _stream(messages)
+    prompt_tokens = sum(retrieval.estimate_tokens(m["content"]) for m in messages)
+    response.headers["X-Prompt-Tokens"] = str(prompt_tokens)
+    response.headers["X-Context-Tokens"] = str(config.NUM_CTX)
     # Welche Grundlagen das Modell erhalten hat (für die Anzeige unter dem Text)
     response.headers["X-KB-Sources"] = quote(json.dumps(kb_sources, ensure_ascii=False))
     return response
