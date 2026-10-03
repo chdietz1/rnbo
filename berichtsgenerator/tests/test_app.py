@@ -179,3 +179,41 @@ def test_skills_and_template_upload():
         token = csrf(c, "/skills")
         skill_id = r.json()["id"]
         assert c.post("/skills", data={"csrf": token, "id": skill_id, "action": "delete"}).status_code == 404
+
+
+def test_kb_selection_and_fair_share():
+    import json
+    from urllib.parse import unquote
+
+    from app import db, retrieval
+
+    with TestClient(app) as c:
+        login(c, "admin", "geheim12345")
+        token = csrf(c, "/knowledge")
+        # Ein Dokument, das bei der Suche stark dominiert, und der Lehrplan mit wenigen Treffern
+        catalogue = "\n\n".join(f"Selbstständigkeit Flexibilität Ausdauer Dialog Kooperation Abschnitt {i}. " * 8 for i in range(30))
+        c.post("/knowledge", data={"csrf": token, "title": "Befähigungen", "doc_type": "Leitfaden", "text": catalogue})
+        c.post("/knowledge", data={"csrf": token, "title": "LP21 Überfachlich", "doc_type": "Lehrplan",
+                                    "text": "Personale Kompetenzen: Selbstständigkeit – Schulalltag und Lernprozesse "
+                                            "zunehmend selbstständig bewältigen, Ausdauer entwickeln."})
+        with db.get_conn() as conn:
+            ids = {r["title"]: r["id"] for r in conn.execute("SELECT id, title FROM documents WHERE student_id IS NULL")}
+            text, sources = retrieval.build_kb_context(conn, "Selbstständigkeit Ausdauer Flexibilität", 4000)
+        assert "LP21 Überfachlich" in sources  # trotz dominantem Katalog dabei
+
+        # Auswahl im Generator: nur LP21, Quellen kommen als Header zurück
+        token = csrf(c, "/students")
+        r = c.post("/students", data={"csrf": token, "first_name": "Kai", "last_name": "Quelle"})
+        sid = int(r.url.path.rsplit("/", 1)[1])
+        html = c.get(f"/students/{sid}/generate").text
+        assert 'name="kb_ids"' in html
+        rt_id = int(re.search(r'<option value="(\d+)"', html).group(1))
+        r = c.post("/api/generate", headers={"X-CSRF-Token": token},
+                   json={"student_id": sid, "report_type_id": rt_id, "observations": "Selbstständigkeit",
+                         "kb_ids": [ids["LP21 Überfachlich"]]})
+        sources = json.loads(unquote(r.headers["X-KB-Sources"]))
+        assert list(sources) == ["LP21 Überfachlich"]
+        r = c.post("/api/generate", headers={"X-CSRF-Token": token},
+                   json={"student_id": sid, "report_type_id": rt_id, "kb_ids": []})
+        assert json.loads(unquote(r.headers["X-KB-Sources"])) == {}
+        assert "Enthält Grundlagen: nein" in r.text

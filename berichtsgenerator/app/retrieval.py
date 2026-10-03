@@ -122,16 +122,40 @@ def build_student_context(conn, document_ids: list[int], query: str, budget: int
     return "\n\n".join(out)
 
 
-def build_kb_context(conn, query: str, budget: int) -> str:
-    rows = conn.execute(
-        "SELECT c.*, d.title, d.doc_type FROM chunks c JOIN documents d ON d.id = c.document_id "
-        "WHERE d.student_id IS NULL AND d.doc_type != ?",
-        (TEMPLATE_TYPE,),
-    ).fetchall()
-    chunks = [dict(r) for r in rows]
+def build_kb_context(conn, query: str, budget: int, doc_ids: list[int] | None = None) -> tuple[str, dict]:
+    """Wählt Abschnitte aus der Wissensbasis. Jedes gewählte Dokument erhält einen gleichen Anteil
+    am Budget (seine relevantesten Abschnitte); übrig gebliebener Platz geht an die insgesamt
+    relevantesten Abschnitte. Gibt (Text, {Dokumenttitel: Anzahl Abschnitte}) zurück."""
+    sql = ("SELECT c.*, d.title, d.doc_type FROM chunks c JOIN documents d ON d.id = c.document_id "
+           "WHERE d.student_id IS NULL AND d.doc_type != ?")
+    args: list = [TEMPLATE_TYPE]
+    if doc_ids is not None:
+        if not doc_ids:
+            return "", {}
+        sql += f" AND d.id IN ({','.join('?' * len(doc_ids))})"
+        args += doc_ids
+    chunks = [dict(r) for r in conn.execute(sql, args).fetchall()]
     ranked = [(s, c) for s, c in rank_chunks(query, chunks) if s > 0]
-    selected = _select_within_budget(ranked, budget)
-    return "\n\n".join(f"--- {c['title']} ---\n{c['text']}" for c in selected)
+    if not ranked:
+        return "", {}
+
+    by_doc: dict[int, list[tuple[float, dict]]] = {}
+    for s, c in ranked:
+        by_doc.setdefault(c["document_id"], []).append((s, c))
+    share = budget // len(by_doc)
+    selected: list[dict] = []
+    for items in by_doc.values():
+        selected += _select_within_budget(items, share)
+    used = sum(len(c["text"]) + 40 for c in selected)
+    taken = {c["id"] for c in selected}
+    selected += _select_within_budget([(s, c) for s, c in ranked if c["id"] not in taken], budget - used)
+
+    order = {c["id"]: i for i, (_, c) in enumerate(ranked)}
+    selected.sort(key=lambda c: order[c["id"]])
+    sources: dict[str, int] = {}
+    for c in selected:
+        sources[c["title"]] = sources.get(c["title"], 0) + 1
+    return "\n\n".join(f"--- {c['title']} ---\n{c['text']}" for c in selected), sources
 
 
 def _select_within_budget(ranked: list[tuple[float, dict]], budget: int) -> list[dict]:

@@ -575,7 +575,12 @@ def generate_page(request: Request, sid: int):
         ).fetchall()
         types = _report_types(conn)
         skills = _skills(conn, user)
-    return render(request, "generate.html", {"student": student, "docs": docs, "types": types, "skills": skills})
+        kb_docs = conn.execute(
+            "SELECT id, title, doc_type FROM documents WHERE student_id IS NULL AND doc_type != ? ORDER BY doc_type, title",
+            (documents.TEMPLATE_TYPE,),
+        ).fetchall()
+    return render(request, "generate.html", {"student": student, "docs": docs, "types": types,
+                                             "skills": skills, "kb_docs": kb_docs})
 
 
 async def _json_body(request: Request) -> dict:
@@ -620,16 +625,23 @@ async def api_generate(request: Request):
             query = f"{rt['name']}\n{rt['instructions']}\n{body.get('observations', '')}\n{body.get('extra', '')}"
             s_budget, kb_budget = retrieval.budgets()
             student_ctx = retrieval.build_student_context(conn, sorted(allowed), query, s_budget)
-            kb_ctx = retrieval.build_kb_context(conn, query, kb_budget) if body.get("use_kb", True) else ""
+            kb_ids = [int(x) for x in body["kb_ids"]] if "kb_ids" in body else None
+            kb_ctx, kb_sources = ("", {})
+            if body.get("use_kb", True):
+                kb_ctx, kb_sources = retrieval.build_kb_context(conn, query, kb_budget, kb_ids)
             db.audit(conn, user, "bericht_generiert", f"schueler={sid} art={rt['key']} dokumente={len(allowed)}")
-            return prompts.build_generation_messages(
+            messages = prompts.build_generation_messages(
                 report_type=dict(rt), student=student, period=str(body.get("period", "")),
                 observations=str(body.get("observations", "")), extra=str(body.get("extra", "")),
                 student_context=student_ctx, kb_context=kb_ctx,
             )
+            return messages, kb_sources
 
-    messages = await run_in_threadpool(prepare)
-    return _stream(messages)
+    messages, kb_sources = await run_in_threadpool(prepare)
+    response = _stream(messages)
+    # Welche Grundlagen das Modell erhalten hat (für die Anzeige unter dem Text)
+    response.headers["X-KB-Sources"] = quote(json.dumps(kb_sources, ensure_ascii=False))
+    return response
 
 
 @app.post("/api/revise")

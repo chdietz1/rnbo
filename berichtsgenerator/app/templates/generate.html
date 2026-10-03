@@ -39,7 +39,16 @@
         {% else %}
         <p class="muted">Keine Unterlagen vorhanden. <a href="/students/{{ student.id }}">Frühere Berichte hochladen</a> verbessert die Ergebnisse deutlich.</p>
         {% endfor %}
-        <label class="check"><input type="checkbox" name="use_kb" checked> Wissensbasis (kantonale Grundlagen, Leitfäden) verwenden</label>
+      </fieldset>
+      <fieldset>
+        <legend>Grundlagen aus der Wissensbasis</legend>
+        {% for k in kb_docs %}
+        <label class="check"><input type="checkbox" name="kb_ids" value="{{ k.id }}" checked>
+          {{ k.title }} <span class="muted">({{ k.doc_type }})</span></label>
+        {% else %}
+        <p class="muted">Die Wissensbasis ist noch leer.</p>
+        {% endfor %}
+        {% if kb_docs %}<p class="muted">Jedes angekreuzte Dokument erhält einen festen Anteil am Platz. Weniger ankreuzen heisst: mehr Platz für die übrigen.</p>{% endif %}
       </fieldset>
       <button type="submit" id="gen-btn">Text generieren</button>
       <button type="button" id="stop-btn" class="secondary" hidden>Abbrechen</button>
@@ -57,6 +66,7 @@
       <label>Entwurf (kann direkt bearbeitet werden)
         <textarea name="content" id="output" rows="28" class="editor"></textarea>
       </label>
+      <p class="muted" id="sources"></p>
       <button id="save-btn">Als Entwurf speichern</button>
     </form>
   </section>

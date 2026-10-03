@@ -47,6 +47,7 @@ Rahmenbedingungen:
 | Berichtsarten | 9 Vorlagen, in der Oberfläche durch Admins anpassbar, u.a. «Förderbericht (Felder für BU21 / BE-Login)» nach Leitfaden der Schule |
 | Formulare | Häkchen in Word (Kontrollkästchen, alte Formularfelder, Wingdings-Symbole), Tabellen, Textfelder; ausgefüllte PDF-Formularfelder |
 | Vorlagen-Abgleich | leere Formulare als «Leere Vorlage (für Abgleich)» in der Wissensbasis; beim Upload ins Dossier wird nur das Ausgefüllte/Angekreuzte übernommen (automatisch erkannt oder manuell gewählt, nachträglich neu abgleichbar) |
+| Grundlagen-Auswahl | beim Erstellen einzelne Wissensbasis-Dokumente an-/abwählen; jedes gewählte Dokument erhält einen festen Anteil am Platz; unter dem Text wird angezeigt, aus welchen Dokumenten wie viele Abschnitte ans Modell gingen |
 | Skills | gespeicherte Anweisungen pro Lehrperson, optional für alle geteilt; einfügbar beim Erstellen und Überarbeiten |
 | Protokoll | wer wann welches Dossier angesehen, bearbeitet, exportiert hat |
 | Löschen | ganzes Dossier inkl. aller Daten (Löschkonzept) |
@@ -191,3 +192,4 @@ Netzwerkkabel, feste IP, USV, verschlüsselte Backups, abschliessbarer Standort,
 5. Fehler behoben: Anmeldung auf dem Mac schlug fehl (Passwortverfahren scrypt fehlt im Mac-Python → PBKDF2)
 6. Sammel-Import von Dossiers aus Excel/CSV
 7. Häkchen-Erkennung, Abgleich mit leeren Vorlagen, Skills, Berichtsart «Förderbericht BU21»
+8. Skills-Seite mit sichtbaren Knöpfen; Wissensbasis-Auswahl mit fairer Platzverteilung und Quellenanzeige (LP21-Bezug kam vorher nicht beim Modell an)

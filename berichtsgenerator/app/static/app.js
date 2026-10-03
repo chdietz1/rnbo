@@ -14,6 +14,18 @@ document.addEventListener("click", (e) => {
 
 let controller = null;
 
+// Zeigt an, aus welchen Wissensbasis-Dokumenten Abschnitte ans Modell gingen
+function showSources(header) {
+  const el = document.getElementById("sources");
+  if (!el || header === null) return;
+  let sources = {};
+  try { sources = JSON.parse(decodeURIComponent(header)); } catch (_) { return; }
+  const parts = Object.entries(sources).map(([title, n]) => `${title} (${n} ${n === 1 ? "Abschnitt" : "Abschnitte"})`);
+  el.textContent = parts.length
+    ? "Verwendete Grundlagen: " + parts.join(", ")
+    : "Aus der Wissensbasis wurde nichts Passendes gefunden.";
+}
+
 async function streamInto(url, body, target, statusEl) {
   controller = new AbortController();
   statusEl.textContent = "Das lokale Modell schreibt … (je nach Rechner 1–5 Minuten)";
@@ -31,6 +43,7 @@ async function streamInto(url, body, target, statusEl) {
       try { msg = (await res.json()).error || msg; } catch (_) {}
       throw new Error(msg);
     }
+    showSources(res.headers.get("X-KB-Sources"));
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     for (;;) {
@@ -68,7 +81,7 @@ if (genForm) {
       observations: fd.get("observations") || "",
       extra: fd.get("extra") || "",
       document_ids: fd.getAll("document_ids").map(Number),
-      use_kb: fd.get("use_kb") === "on",
+      kb_ids: fd.getAll("kb_ids").map(Number),
     };
     genBtn.disabled = true;
     stopBtn.hidden = false;
