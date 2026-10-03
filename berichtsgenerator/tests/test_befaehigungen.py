@@ -42,3 +42,11 @@ def test_area_prompt_puts_notes_last():
                                   student_context="Alter Bericht", kb_context="")
     user = msgs[-1]["content"]
     assert user.index("Alter Bericht") < user.index("=== AUFTRAG ===") < user.index("Backen am Donnerstag")
+
+
+def test_parse_keeps_only_first_variant():
+    text = ("AUSGANGSLAGE:\nErste Variante.\nWAS:\nBezug eins.\nWO:\nKontext eins.\n\n"
+            "AUSGANGSLAGE:\nZweite Variante.\nWAS:\nBezug zwei.\nWO:\nKontext zwei.")
+    parts = bf.parse_area_output(text)
+    assert parts["AUSGANGSLAGE"] == "Erste Variante."
+    assert parts["WAS"] == "Bezug eins." and parts["WO"] == "Kontext eins."

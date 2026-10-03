@@ -208,7 +208,8 @@ def build_area_messages(*, area: dict, student: dict, period: str, general_notes
         f"{lp21_rule}{was_rule}"
         f"WO:\n<2–3 Sätze im Stil «{first} wird mit Unterstützung von … in/bei … angehen.» "
         "Nenne die konkreten Situationen, Orte, Zeiten und Beteiligten aus den Stichworten.>\n\n"
-        "Regeln: Verwende JEDES Stichwort zu diesem Bereich mindestens einmal. Erfinde nichts, was weder in den "
+        "Regeln: Gib jeden der Teile genau EINMAL aus, keine Varianten oder Alternativen. "
+        "Verwende JEDES Stichwort zu diesem Bereich mindestens einmal. Erfinde nichts, was weder in den "
         "Stichworten noch in den Unterlagen steht. Wiederhole in WO nicht den Text von WAS."
     )
     if general_notes:
@@ -233,10 +234,15 @@ def parse_area_output(text: str) -> dict:
     """Zerlegt die Modellantwort in ihre Teile. Fehlende Teile bleiben leer."""
     result = {k: "" for k in _LABELS}
     current = None
+    seen: set[str] = set()
     for line in text.splitlines():
         m = _LABEL_RE.match(line)
         if m:
-            current = (m.group(1) or m.group(2)).upper()
+            label = (m.group(1) or m.group(2)).upper()
+            if label in seen:  # Modell beginnt eine zweite Variante: nur die erste verwenden
+                break
+            seen.add(label)
+            current = label
             rest = m.group(3).strip()
             if rest:
                 result[current] += rest + "\n"

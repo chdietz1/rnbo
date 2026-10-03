@@ -717,7 +717,7 @@ async def api_befaehigungen(request: Request):
         yield befaehigungen.build_header(areas) + "\n"
         for n, (area, messages) in enumerate(zip(areas, all_messages), start=1):
             try:
-                answer = await llm.chat_complete(messages)
+                answer = await llm.chat_complete(messages, max_tokens=900)
             except llm.LLMError as e:
                 yield f"\n[FEHLER: {e}]"
                 return

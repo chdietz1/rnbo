@@ -199,3 +199,4 @@ Netzwerkkabel, feste IP, USV, verschlüsselte Backups, abschliessbarer Standort,
 8. Skills-Seite mit sichtbaren Knöpfen; Wissensbasis-Auswahl mit fairer Platzverteilung und Quellenanzeige (LP21-Bezug kam vorher nicht beim Modell an)
 9. Platzberechnung zieht die Länge von Auftrag, Stichworten und Skills ab (vorher lief die Anfrage bei langen Skills über das Kontextfenster); Anzeige «Umfang der Anfrage: ca. X von Y Tokens»
 10. Seite «Befähigungsschwerpunkte planen» (der lange Ein-Schritt-Skill überforderte das 12B-Modell: erfundene Unterpunkte, ignorierte Stichworte); bei allen Berichtsarten stehen die Stichworte jetzt am Schluss der Anfrage
+11. Befähigungsschwerpunkte: Modell schrieb das Format mehrfach (Varianten) → nur erste Variante übernehmen, «genau einmal» im Auftrag, Antwortlänge pro Bereich begrenzt (num_predict 900)

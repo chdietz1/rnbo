@@ -13,7 +13,7 @@ class LLMError(RuntimeError):
     pass
 
 
-async def chat_stream(messages: list[dict]) -> AsyncIterator[str]:
+async def chat_stream(messages: list[dict], max_tokens: int | None = None) -> AsyncIterator[str]:
     if config.LLM_BACKEND == "mock":
         async for piece in _mock_stream(messages):
             yield piece
@@ -25,6 +25,8 @@ async def chat_stream(messages: list[dict]) -> AsyncIterator[str]:
         "stream": True,
         "options": {"num_ctx": config.NUM_CTX, "temperature": config.TEMPERATURE},
     }
+    if max_tokens:
+        payload["options"]["num_predict"] = max_tokens
     try:
         async with httpx.AsyncClient(timeout=config.LLM_TIMEOUT) as client:
             async with client.stream("POST", f"{config.OLLAMA_URL}/api/chat", json=payload) as r:
@@ -49,10 +51,10 @@ async def chat_stream(messages: list[dict]) -> AsyncIterator[str]:
         ) from e
 
 
-async def chat_complete(messages: list[dict]) -> str:
+async def chat_complete(messages: list[dict], max_tokens: int | None = None) -> str:
     """Wie chat_stream, liefert aber die ganze Antwort auf einmal."""
     parts = []
-    async for piece in chat_stream(messages):
+    async for piece in chat_stream(messages, max_tokens):
         parts.append(piece)
     return "".join(parts)
 
