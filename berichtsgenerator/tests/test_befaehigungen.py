@@ -50,3 +50,13 @@ def test_parse_keeps_only_first_variant():
     parts = bf.parse_area_output(text)
     assert parts["AUSGANGSLAGE"] == "Erste Variante."
     assert parts["WAS"] == "Bezug eins." and parts["WO"] == "Kontext eins."
+
+
+def test_prompt_contains_today_and_recency_rule():
+    from app.prompts import today_text
+
+    area = bf.parse_selection([{"num": "VI", "unterpunkte": [{"idx": 0}]}])[0]
+    user = bf.build_area_messages(area=area, student={"first_name": "Kai", "class_name": "10. SJ"}, period="",
+                                  general_notes="", student_context="", kb_context="")[-1]["content"]
+    assert f"Heutiges Datum: {today_text()}" in user and "Klasse/Stufe: 10. SJ" in user
+    assert "veralteten Angaben" in user

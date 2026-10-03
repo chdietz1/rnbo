@@ -202,6 +202,20 @@ REVISE_ACTIONS = {
 }
 
 
+AKTUALITAET_HINWEIS = (
+    "Die früheren Unterlagen haben ein Datum und beschreiben die Situation zu jenem Zeitpunkt "
+    "(z.B. eine frühere Klasse oder damals geplante Schritte). Massgeblich für den heutigen Stand "
+    "sind das heutige Datum, die Angaben zur Klasse und die Stichworte der Lehrperson. "
+    "Übernimm keine veralteten Angaben als aktuell."
+)
+
+
+def today_text() -> str:
+    from datetime import date
+
+    return date.today().strftime("%d.%m.%Y")
+
+
 def build_generation_messages(
     *,
     report_type: dict,
@@ -224,10 +238,12 @@ def build_generation_messages(
         )
     parts.append(
         "=== ANGABEN ===\n"
+        f"Heutiges Datum: {today_text()}\n"
         f"Vorname: {student['first_name']}\n"
         f"Klasse/Stufe: {student.get('class_name') or '[unbekannt]'}\n"
         f"Jahrgang: {student.get('birth_year') or '[unbekannt]'}\n"
-        f"Berichtsperiode / Datum: {period or '[unbekannt]'}"
+        f"Berichtsperiode / Datum: {period or '[unbekannt]'}\n"
+        + AKTUALITAET_HINWEIS
     )
     parts.append("=== AUFTRAG ===\n" + report_type["instructions"])
     if extra.strip():

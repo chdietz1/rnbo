@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import re
 
-from .prompts import SYSTEM_PROMPT
+from .prompts import AKTUALITAET_HINWEIS, SYSTEM_PROMPT, today_text
 
 # Befähigungsbereiche und deren Inhalte (Anwendungsbereiche Lehrplan 21, Originalwortlaut)
 CATALOGUE = [
@@ -185,8 +185,10 @@ def build_area_messages(*, area: dict, student: dict, period: str, general_notes
         parts.append("=== FRÜHERE UNTERLAGEN ZUM KIND ===\n" + student_context)
     parts.append(
         "=== ANGABEN ===\n"
+        f"Heutiges Datum: {today_text()}\n"
         f"Vorname: {first}\nKlasse/Stufe: {student.get('class_name') or '[unbekannt]'}\n"
-        f"Planung für: {period or 'das nächste Schuljahr'}"
+        f"Planung für: {period or 'das nächste Schuljahr'}\n"
+        + AKTUALITAET_HINWEIS
     )
     chosen = "\n".join(f"{u['title']}\n" + "\n".join(f"- {i}" for i in u["items"]) for u in area["unterpunkte"])
     parts.append(f"=== GEWÄHLTER BEFÄHIGUNGSBEREICH ===\n{area['num']} {area['name']}\n{chosen}")
