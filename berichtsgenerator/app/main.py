@@ -784,9 +784,9 @@ async def skills_save(request: Request):
     sid = int(form.get("id") or 0)
     with db.get_conn() as conn:
         if form.get("action") == "delete" and sid:
-            _can_edit_skill(conn, user, sid)
+            skill = _can_edit_skill(conn, user, sid)
             conn.execute("DELETE FROM skills WHERE id = ?", (sid,))
-            return redirect("/skills", "Skill gelöscht.", request)
+            return redirect("/skills", f"Skill «{skill['name']}» gelöscht.", request)
         name, text = form.get("name", "").strip(), form.get("text", "").strip()
         if not name or not text:
             return redirect("/skills", "Name und Anweisung sind erforderlich.", request)

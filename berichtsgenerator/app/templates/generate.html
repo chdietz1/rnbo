@@ -16,7 +16,7 @@
       <label>Aktuelle Beobachtungen und Stichworte
         <textarea name="observations" rows="10" placeholder="- Liest kurze Texte mit Silbenunterstützung selbstständig&#10;- Zahlenraum bis 100: Addition ohne Übertrag sicher&#10;- Sucht in der Pause vermehrt Kontakt zu Mitschülern&#10;- Förderziel Konzentration: arbeitet 15 Min. selbstständig"></textarea>
       </label>
-      <label for="extra">Zusätzliche Anweisungen (optional)</label>
+      <div class="label-row"><label for="extra">Zusätzliche Anweisungen (optional)</label><a class="small" href="/skills">Skills verwalten</a></div>
       <select class="skill-select" data-target="extra" aria-label="Skill einfügen">
           <option value="">Gespeicherten Skill einfügen …</option>
           {% for s in skills %}<option value="{{ s.id }}" data-text="{{ s.text }}">{{ s.name }}{% if not s.own %} (von {{ s.owner }}){% endif %}</option>{% endfor %}

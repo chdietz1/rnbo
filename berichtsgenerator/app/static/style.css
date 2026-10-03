@@ -79,3 +79,14 @@ details.card > summary { margin: 0; }
 .skill-select { margin: 0 0 6px; }
 details.skill-save { margin: 6px 0 12px; }
 details.skill-save summary { font-size: .92em; color: var(--accent); }
+.skill-list { display: grid; gap: 16px; align-content: start; }
+.skill-list .card { margin-bottom: 0; }
+.skill-head { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: baseline; }
+.skill-head h2 { margin: 0; }
+.skill pre.doctext { max-height: 12em; }
+details.skill-edit { flex: 1; min-width: 0; }
+details.skill-edit > summary { list-style: none; margin: 0; }
+details.skill-edit > summary::-webkit-details-marker { display: none; }
+details.skill-edit[open] > summary { margin-bottom: 10px; }
+.label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.label-row label { margin-bottom: 4px; }

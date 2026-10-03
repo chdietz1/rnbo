@@ -35,7 +35,7 @@
       <button type="button" class="secondary revise" data-action="{{ key }}">{{ label }}</button>
       {% endfor %}
     </div>
-    <label for="revise-instruction">Eigene Anweisung</label>
+    <div class="label-row"><label for="revise-instruction">Eigene Anweisung</label><a class="small" href="/skills">Skills verwalten</a></div>
     <select class="skill-select" data-target="revise-instruction" aria-label="Skill einfügen">
           <option value="">Gespeicherten Skill einfügen …</option>
           {% for s in skills %}<option value="{{ s.id }}" data-text="{{ s.text }}">{{ s.name }}{% if not s.own %} (von {{ s.owner }}){% endif %}</option>{% endfor %}
