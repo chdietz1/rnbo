@@ -162,7 +162,8 @@ def test_skills_and_template_upload():
         assert "Vollständiger Text wird verwendet" in r.text
 
         # Skills: über die Oberfläche und über die API speichern, im Generator sichtbar
-        c.post("/skills", data={"csrf": token, "name": "Kommunikation", "text": "Schwerpunkt Kommunikation."})
+        r = c.post("/skills", data={"csrf": token, "name": "Kommunikation", "text": "Schwerpunkt Kommunikation."})
+        assert "<h2>Kommunikation</h2>" in r.text and "Bearbeiten" in r.text and "Löschen" in r.text
         r = c.post("/api/skills", headers={"X-CSRF-Token": token},
                    json={"name": "Kurz", "text": "Maximal eine Seite.", "shared": True})
         assert r.status_code == 200
@@ -173,7 +174,8 @@ def test_skills_and_template_upload():
         c.post("/logout", data={"csrf": token})
         login(c, "lp", "passwort1234")
         page = c.get("/skills").text
-        assert "<strong>Kurz</strong>" in page and "<strong>Kommunikation</strong>" not in page
+        assert "<h2>Kurz</h2>" in page and "<h2>Kommunikation</h2>" not in page
+        assert "nicht ändern" in page and "Bearbeiten" not in page
         token = csrf(c, "/skills")
         skill_id = r.json()["id"]
         assert c.post("/skills", data={"csrf": token, "id": skill_id, "action": "delete"}).status_code == 404
