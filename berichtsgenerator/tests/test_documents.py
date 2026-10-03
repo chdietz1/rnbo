@@ -85,3 +85,16 @@ def test_pdf_form_fields():
             }
 
     assert documents._pdf_form_fields(Reader()) == ["Name: Lina", "[x] Logopädie"]
+
+
+def test_template_with_repeated_placeholders():
+    """Identische Platzhaltertexte dürfen ausgefüllte Felder nicht dem falschen Feld zuordnen."""
+    filler = "Lorem ipsum dolor sit amet"
+    fields = ["Allgemeine Anmerkungen", "Mathematik", "Deutsch", "Musik", "Personale Kompetenzen", "Ausblick"]
+    template = "\n".join(f"{f}\n{filler}" for f in fields)
+    filled = "\n".join(
+        f"{f}\n" + ("Übernimmt Verantwortung für das Material." if f == "Personale Kompetenzen" else "")
+        for f in fields
+    )
+    reduced = documents.strip_template(filled, template)
+    assert reduced == "Personale Kompetenzen\nÜbernimmt Verantwortung für das Material."

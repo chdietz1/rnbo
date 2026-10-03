@@ -27,7 +27,7 @@ def extract_text(filename: str, data: bytes) -> str:
 
         try:
             reader = PdfReader(io.BytesIO(data))
-            text = "\n\n".join((page.extract_text() or "") for page in reader.pages)
+            text = "\n\n".join(_pdf_page_text(page) for page in reader.pages)
             fields = _pdf_form_fields(reader)
             if fields:
                 text += "\n\nAusgefüllte Formularfelder:\n" + "\n".join(fields)
@@ -137,6 +137,25 @@ def _docx_para(p) -> str:
 # ---------------------------------------------------------------- PDF-Formulare
 
 
+def _pdf_page_text(page) -> str:
+    """Layout-Modus hält Überschriften und zugehörige Texte in der richtigen Reihenfolge
+    (wichtig für Formulare); bei Problemen Rückfall auf den einfachen Modus."""
+    import logging
+
+    logging.getLogger("pypdf").setLevel(logging.ERROR)  # z.B. Warnungen zu gedrehtem Text
+    plain = page.extract_text() or ""
+    try:
+        layout = page.extract_text(extraction_mode="layout") or ""
+    except Exception:
+        layout = ""
+    # Manche PDFs zerreissen im Layout-Modus Wörter («Le hr pla n»): dann den einfachen Modus nehmen
+    vocab = set(re.findall(r"\w+", plain))
+    words = re.findall(r"\w+", layout)
+    broken = sum(1 for w in words if w not in vocab) / len(words) if words else 1.0
+    text = layout if layout.strip() and broken < 0.02 else plain
+    return "\n".join(re.sub(r"\s{2,}", "  ", line).strip() for line in text.splitlines())
+
+
 def _pdf_form_fields(reader) -> list[str]:
     try:
         fields = reader.get_fields() or {}
@@ -179,7 +198,14 @@ def strip_template(text: str, template: str) -> str:
     """Behält nur, was gegenüber der leeren Vorlage neu ist, jeweils mit der vorangehenden
     Vorlagenzeile (meist die Überschrift bzw. Frage) als Kontext."""
     a = [l for l in template.splitlines() if l.strip()]
-    b = [l for l in text.splitlines() if l.strip()]
+    # Zeilen, die in der Vorlage mehrfach vorkommen (Platzhaltertexte, Kopfzeilen jeder Seite), taugen
+    # nicht als Anker und würden ausgefüllte Texte dem falschen Feld zuordnen: beim Vergleich ignorieren.
+    counts: dict[str, int] = {}
+    for line in a:
+        counts[_norm_line(line)] = counts.get(_norm_line(line), 0) + 1
+    repeated = {k for k, v in counts.items() if v > 1}
+    a = [l for l in a if _norm_line(l) not in repeated]
+    b = [l for l in text.splitlines() if l.strip() and _norm_line(l) not in repeated]
     sm = difflib.SequenceMatcher(None, [_norm_line(x) for x in a], [_norm_line(x) for x in b], autojunk=False)
     out: list[str] = []
     context = None

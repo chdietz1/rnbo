@@ -58,21 +58,29 @@ Konkrete, erreichbare nächste Schritte bzw. Vorschläge für Förderziele.""",
     {
         "key": "foerderbericht_bu21",
         "name": "Förderbericht (Felder für BU21 / BE-Login)",
-        "description": "Texte pro Feld zum Einfügen in die Beurteilungsapp, mit Auswertung der Förderschwerpunkte.",
-        "instructions": """Verfasse die Texte für den Förderbericht in der Beurteilungsapp (BU21 im BE-Login). Jeder Abschnitt wird einzeln in ein Feld der App kopiert. Schreibe darum pro Abschnitt einen in sich verständlichen Text.
+        "description": "Texte pro Feld des offiziellen Förderberichts (BU21), mit Auswertung der Förderschwerpunkte.",
+        "instructions": """Verfasse die Texte für den offiziellen Förderbericht des besonderen Volksschulangebots (Formular BU21, Beurteilungsapp im BE-Login). Jeder Abschnitt wird einzeln in ein Feld der App kopiert. Schreibe darum pro Abschnitt einen in sich verständlichen Text. Verwende genau die folgenden Überschriften.
 
 ## Förderschwerpunkte
-1–3 Förderschwerpunkte aus der Bildungsplanung bzw. den Handlungszielen der Standortgespräche (STAO), je ein kurzer, klarer Satz. Nur Schwerpunkte, die in den Unterlagen stehen. Hier noch keine Auswertung.
+(Titelseite «Beurteilungsbericht allgemein») 1–3 Förderschwerpunkte aus der Bildungsplanung bzw. den Handlungszielen der Standortgespräche (STAO), je ein kurzer, klarer Satz. Nur Schwerpunkte, die in den Unterlagen stehen. Hier noch keine Auswertung.
 
 ## Allgemeine Anmerkungen zur aktuellen Lebens- und Schulsituation
-Falls die Grundlagen (Leitfaden der Schule) einen Standardtext für dieses Feld enthalten, übernimm ihn wörtlich. Sonst: [Ergänzen: Standardtext der Schule]. Danach höchstens 1–2 Sätze zur aktuellen Situation des Kindes, falls aus den Unterlagen bekannt.
+Falls die Grundlagen (Leitfaden der Schule) einen Standardtext für dieses Feld enthalten, übernimm ihn wörtlich. Sonst: [Ergänzen: Standardtext der Schule]. Danach höchstens 2–3 Sätze zur aktuellen Situation, soweit aus den Unterlagen bekannt (Eindruck, Schulweg, Akzeptanz in der Klasse und im Schulhaus, Integrationsverlauf, Elternmitarbeit, Veränderungen, Zusammenarbeit mit der Lehrperson, sonderpädagogische Massnahmen).
 
-## Personale Kompetenzen
-## Soziale Kompetenzen
-## Methodische Kompetenzen
-Für jedes dieser drei Felder:
+## Fachliche Kompetenzen
+Nur Fächer, zu denen Unterlagen oder Beobachtungen vorliegen, je mit «### » und genau diesem Namen: Mathematik; Deutsch; Natur, Mensch, Gesellschaft; Bildnerisches Gestalten; Musik; Französisch; Englisch; Technisches/Textiles Gestalten; Medien und Informatik; Bewegung und Sport; Berufliche Orientierung. Fächer ohne Informationen weglassen. Mathematik und Deutsch stehen im Vordergrund.
+
+## Überfachliche Kompetenzen
+### Personale Kompetenzen
+(Befähigungsbereiche: sich selbst sein und werden; dranbleiben und bewältigen; sich und andere anerkennen)
+### Soziale Kompetenzen
+(Befähigungsbereiche: sich austauschen und dazugehören; sich und andere anerkennen; mitbestimmen und mitgestalten)
+### Methodische Kompetenzen
+(Befähigungsbereiche: erwerben und nutzen; dranbleiben und bewältigen; mitbestimmen und gestalten)
+
+Für jedes der drei Felder (die Klammern mit den Befähigungsbereichen nicht ausgeben):
 - Bezieht sich der Text auf einen Förderschwerpunkt, beginne mit «(vgl. Förderschwerpunkte)» und werte ihn kurz aus: Was konnte erreicht werden, was noch nicht? Wird der Förderschwerpunkt für das nächste Schuljahr beibehalten?
-- Jedes Feld braucht Inhalt. Ergänze bei Bedarf weitere beobachtete Kompetenzen, auch positive oder weitere Lernfelder, gern mit Bezug zu den Befähigungsbereichen (z.B. «Sich austauschen und dazugehören», «Dranbleiben und bewältigen»), falls diese in den Grundlagen stehen.
+- Jedes Feld braucht Inhalt. Ergänze weitere beobachtete Kompetenzen, auch positive oder weitere Lernfelder, mit Bezug zu den genannten Befähigungsbereichen.
 - 3–6 Sätze pro Feld, konkret und beobachtbar.
 
 ## Ausblick, Ressourcen, Massnahmen
