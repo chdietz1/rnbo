@@ -82,6 +82,16 @@ CREATE TABLE IF NOT EXISTS reports (
     updated_at TEXT NOT NULL
 );
 
+-- Gespeicherte Anweisungen («Skills») von Lehrpersonen
+CREATE TABLE IF NOT EXISTS skills (
+    id INTEGER PRIMARY KEY,
+    owner_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    text TEXT NOT NULL,
+    shared INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS audit (
     id INTEGER PRIMARY KEY,
     ts TEXT NOT NULL,
@@ -123,6 +133,12 @@ def init_db() -> None:
 
     with get_conn() as conn:
         conn.executescript(SCHEMA)
+        # Spalten, die in späteren Versionen dazugekommen sind
+        existing = {r["name"] for r in conn.execute("PRAGMA table_info(documents)")}
+        if "full_text" not in existing:  # Originaltext vor dem Abgleich mit einer Vorlage
+            conn.execute("ALTER TABLE documents ADD COLUMN full_text TEXT")
+        if "template_id" not in existing:
+            conn.execute("ALTER TABLE documents ADD COLUMN template_id INTEGER")
         for i, rt in enumerate(DEFAULT_REPORT_TYPES):
             conn.execute(
                 "INSERT OR IGNORE INTO report_types (key, name, description, instructions, sort) "

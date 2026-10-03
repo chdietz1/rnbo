@@ -138,3 +138,42 @@ def test_bulk_import():
         page = c.get("/students").text
         assert "Import Noah" in page and "Müller" not in page
         assert c.get("/admin/import").status_code == 403
+
+
+def test_skills_and_template_upload():
+    from tests.test_documents import _formular
+
+    with TestClient(app) as c:
+        login(c, "admin", "geheim12345")
+        token = csrf(c, "/knowledge")
+        # leere Vorlage hochladen
+        c.post("/knowledge", data={"csrf": token, "title": "Formular SB", "doc_type": documents.TEMPLATE_TYPE},
+               files={"file": ("leer.docx", _formular(False), "application/octet-stream")})
+        token = csrf(c, "/students")
+        r = c.post("/students", data={"csrf": token, "first_name": "Ben", "last_name": "Vorlage"})
+        sid = int(r.url.path.rsplit("/", 1)[1])
+        r = c.post(f"/students/{sid}/documents", data={"csrf": token, "title": "SB 2025", "doc_type": "Standortbericht"},
+                   files={"file": ("kind.docx", _formular(True), "application/octet-stream")})
+        assert "Abgleich mit Vorlage" in r.text and "Vorlage abgeglichen" in r.text
+        did = int(re.search(r'href="/documents/(\d+)">SB 2025', r.text).group(1))
+        page = c.get(f"/documents/{did}").text
+        assert "Vollständiger Originaltext" in page
+        r = c.post(f"/documents/{did}/template", data={"csrf": token, "template": "none"})
+        assert "Vollständiger Text wird verwendet" in r.text
+
+        # Skills: über die Oberfläche und über die API speichern, im Generator sichtbar
+        c.post("/skills", data={"csrf": token, "name": "Kommunikation", "text": "Schwerpunkt Kommunikation."})
+        r = c.post("/api/skills", headers={"X-CSRF-Token": token},
+                   json={"name": "Kurz", "text": "Maximal eine Seite.", "shared": True})
+        assert r.status_code == 200
+        page = c.get(f"/students/{sid}/generate").text
+        assert "Kommunikation" in page and 'data-text="Maximal eine Seite."' in page
+
+        # Lehrperson sieht nur den geteilten Skill und kann ihn nicht ändern
+        c.post("/logout", data={"csrf": token})
+        login(c, "lp", "passwort1234")
+        page = c.get("/skills").text
+        assert "<strong>Kurz</strong>" in page and "<strong>Kommunikation</strong>" not in page
+        token = csrf(c, "/skills")
+        skill_id = r.json()["id"]
+        assert c.post("/skills", data={"csrf": token, "id": skill_id, "action": "delete"}).status_code == 404

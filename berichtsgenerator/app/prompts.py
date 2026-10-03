@@ -22,7 +22,8 @@ Verbindliche Regeln:
 5. Aktuelle Beobachtungen der Lehrperson haben Vorrang vor älteren Berichten. Ältere Berichte dienen dazu, Entwicklungen und Fortschritte sichtbar zu machen.
 6. Schreibe für Erziehungsberechtigte und Fachpersonen verständlich. Fachbegriffe nur, wenn nötig, und dann kurz erklärt.
 7. Nenne das Kind mit seinem Vornamen. Keine Wertungen der Familie. Keine medizinischen oder psychologischen Diagnosen stellen.
-8. Formatierung: Überschriften mit «## », Unterüberschriften mit «### », Aufzählungen mit «- ». Kein weiteres Markdown (keine Tabellen, kein Fettdruck).
+8. In den Unterlagen bedeutet «[x]» angekreuzt und «[ ]» nicht angekreuzt. Nur angekreuzte Optionen gelten. Steht «(Auszug: nur ausgefüllte Teile)» bei einer Unterlage, wurden leere Teile eines Formulars entfernt; die Zeile vor einem Eintrag ist jeweils die Frage oder Überschrift aus dem Formular.
+9. Formatierung: Überschriften mit «## », Unterüberschriften mit «### », Aufzählungen mit «- ». Kein weiteres Markdown (keine Tabellen, kein Fettdruck).
 """
 
 
@@ -53,6 +54,29 @@ Pro Fachbereich bzw. Förderbereich, zu dem Informationen vorliegen (z.B. Sprach
 
 ## Ausblick und nächste Entwicklungsschritte
 Konkrete, erreichbare nächste Schritte bzw. Vorschläge für Förderziele.""",
+    },
+    {
+        "key": "foerderbericht_bu21",
+        "name": "Förderbericht (Felder für BU21 / BE-Login)",
+        "description": "Texte pro Feld zum Einfügen in die Beurteilungsapp, mit Auswertung der Förderschwerpunkte.",
+        "instructions": """Verfasse die Texte für den Förderbericht in der Beurteilungsapp (BU21 im BE-Login). Jeder Abschnitt wird einzeln in ein Feld der App kopiert. Schreibe darum pro Abschnitt einen in sich verständlichen Text.
+
+## Förderschwerpunkte
+1–3 Förderschwerpunkte aus der Bildungsplanung bzw. den Handlungszielen der Standortgespräche (STAO), je ein kurzer, klarer Satz. Nur Schwerpunkte, die in den Unterlagen stehen. Hier noch keine Auswertung.
+
+## Allgemeine Anmerkungen zur aktuellen Lebens- und Schulsituation
+Falls die Grundlagen (Leitfaden der Schule) einen Standardtext für dieses Feld enthalten, übernimm ihn wörtlich. Sonst: [Ergänzen: Standardtext der Schule]. Danach höchstens 1–2 Sätze zur aktuellen Situation des Kindes, falls aus den Unterlagen bekannt.
+
+## Personale Kompetenzen
+## Soziale Kompetenzen
+## Methodische Kompetenzen
+Für jedes dieser drei Felder:
+- Bezieht sich der Text auf einen Förderschwerpunkt, beginne mit «(vgl. Förderschwerpunkte)» und werte ihn kurz aus: Was konnte erreicht werden, was noch nicht? Wird der Förderschwerpunkt für das nächste Schuljahr beibehalten?
+- Jedes Feld braucht Inhalt. Ergänze bei Bedarf weitere beobachtete Kompetenzen, auch positive oder weitere Lernfelder, gern mit Bezug zu den Befähigungsbereichen (z.B. «Sich austauschen und dazugehören», «Dranbleiben und bewältigen»), falls diese in den Grundlagen stehen.
+- 3–6 Sätze pro Feld, konkret und beobachtbar.
+
+## Ausblick, Ressourcen, Massnahmen
+Kurz. Möglich ist der Satz: «Ressourcen und gezielte Fördermassnahmen sind dem STAO-Bericht zu entnehmen.» Einen Austritt oder ein 10. Schuljahr hier erwähnen, falls aus den Unterlagen bekannt.""",
     },
     {
         "key": "standortbericht",

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Skills{% endblock %}
+{% block content %}
+<h1>Skills</h1>
+<p>Skills sind gespeicherte Anweisungen, die Sie beim Erstellen oder Überarbeiten eines Berichts mit einem Klick einfügen, z.B. «Schwerpunkt Kommunikation», «Kurzfassung für Übertritt» oder «Formulierungen für Erziehungsberechtigte mit wenig Deutschkenntnissen». Geteilte Skills sehen alle Lehrpersonen.</p>
+<div class="grid2 wide-left">
+  <section>
+    {% for s in skills %}
+    <details class="card">
+      <summary><strong>{{ s.name }}</strong> {% if s.shared %}<span class="badge">geteilt</span>{% endif %}
+        {% if not s.own %}<span class="muted">von {{ s.owner }}</span>{% endif %}</summary>
+      {% if s.own or user.is_admin %}
+      <form method="post" action="/skills">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="id" value="{{ s.id }}">
+        <label>Name <input name="name" value="{{ s.name }}" required></label>
+        <label>Anweisung <textarea name="text" rows="6" required>{{ s.text }}</textarea></label>
+        <label class="check"><input type="checkbox" name="shared" {% if s.shared %}checked{% endif %}> mit allen teilen</label>
+        <div class="row">
+          <button name="action" value="save">Speichern</button>
+          <button name="action" value="delete" class="link danger" data-confirm="Skill löschen?">löschen</button>
+        </div>
+      </form>
+      {% else %}
+      <pre class="doctext">{{ s.text }}</pre>
+      {% endif %}
+    </details>
+    {% else %}
+    <section class="card"><p>Noch keine Skills. Erstellen Sie rechts den ersten oder speichern Sie eine Anweisung direkt beim Erstellen eines Berichts.</p></section>
+    {% endfor %}
+  </section>
+  <section class="card">
+    <h2>Neuer Skill</h2>
+    <form method="post" action="/skills">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label>Name <input name="name" required placeholder="z.B. Schwerpunkt Kommunikation"></label>
+      <label>Anweisung <textarea name="text" rows="6" required placeholder="z.B. Lege den Schwerpunkt auf Kommunikation und Sprache. Beschreibe konkrete Situationen aus dem Schulalltag."></textarea></label>
+      <label class="check"><input type="checkbox" name="shared"> mit allen teilen</label>
+      <button>Erstellen</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

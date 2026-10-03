@@ -117,7 +117,13 @@ Die anderen Lehrpersonen öffnen `http://<IP-des-Rechners>:8000`, z.B. `http://1
    - **Schulinterne** Beurteilungskonzepte, Vorlagen und anonymisierte **Musterberichte** (verbessern den Stil stark)
 
    In der Wissensbasis **keine Personendaten** ablegen.
+   **Leere Vorlagen:** Unausgefüllte Formulare (Förderplan, Standortbericht …) mit der Art
+   «Leere Vorlage (für Abgleich)» hochladen. Beim Hochladen ins Dossier erkennt das System die passende Vorlage
+   und gibt dem Modell nur die ausgefüllten und angekreuzten Teile weiter (jeweils mit der Frage davor).
+   Häkchen in Word (Kontrollkästchen, Formularfelder, Wingdings) und ausgefüllte PDF-Formularfelder werden erkannt.
 3. Unter **Berichtsarten** Aufbau und Formulierungen an die Vorlagen der Schule anpassen.
+   Unter **Skills** speichert jede Lehrperson eigene Anweisungen (z.B. «Schwerpunkt Kommunikation») und fügt
+   sie beim Erstellen oder Überarbeiten mit einem Klick ein, auf Wunsch für alle geteilt.
 4. Pro Kind ein **Dossier** anlegen, alte Berichte hochladen und Kolleginnen/Kollegen freigeben.
    Viele Kinder auf einmal: «Schülerinnen & Schüler» → **«Mehrere Dossiers aus Excel/CSV importieren»**
    (nur Admin). Eine Liste mit den Spalten Vorname, Nachname, Jahrgang, Klasse und optional Lehrpersonen

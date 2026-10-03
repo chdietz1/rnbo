@@ -5,6 +5,29 @@
 <section class="card">
   <h1>{{ doc.title }}</h1>
   <p class="muted">{{ doc.doc_type }}{% if doc.doc_date %} · {{ doc.doc_date }}{% endif %}{% if doc.filename %} · Datei: {{ doc.filename }}{% endif %}</p>
+  {% if used_template %}
+  <p class="flash">Abgeglichen mit der leeren Vorlage «{{ used_template.title }}». Das Modell erhält nur die ausgefüllten bzw. angekreuzten Teile, jeweils mit der Frage oder Überschrift davor.</p>
+  {% endif %}
+  <h2>{% if doc.full_text %}Text für das Modell{% else %}Erkannter Text{% endif %}</h2>
   <pre class="doctext">{{ doc.content_text }}</pre>
+  {% if doc.full_text %}
+  <details><summary>Vollständiger Originaltext</summary><pre class="doctext">{{ doc.full_text }}</pre></details>
+  {% endif %}
 </section>
+{% if doc.student_id and templates %}
+<section class="card">
+  <h2>Abgleich mit leerer Vorlage</h2>
+  <form method="post" action="/documents/{{ doc.id }}/template" class="row">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label class="grow">Vorlage
+      <select name="template">
+        <option value="auto">automatisch erkennen</option>
+        <option value="none">keinen Abgleich (ganzer Text)</option>
+        {% for t in templates %}<option value="{{ t.id }}" {% if used_template and used_template.id == t.id %}selected{% endif %}>{{ t.title }}</option>{% endfor %}
+      </select>
+    </label>
+    <button>Neu abgleichen</button>
+  </form>
+</section>
+{% endif %}
 {% endblock %}

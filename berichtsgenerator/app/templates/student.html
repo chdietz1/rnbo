@@ -26,7 +26,7 @@
       <thead><tr><th>Titel</th><th>Art</th><th>Datum</th><th></th></tr></thead>
       <tbody>
       {% for d in docs %}
-      <tr><td><a href="/documents/{{ d.id }}">{{ d.title }}</a></td><td>{{ d.doc_type }}</td><td>{{ d.doc_date or "" }}</td>
+      <tr><td><a href="/documents/{{ d.id }}">{{ d.title }}</a>{% if d.template_id %} <span class="badge" title="Nur ausgefüllte Teile">Vorlage abgeglichen</span>{% endif %}</td><td>{{ d.doc_type }}</td><td>{{ d.doc_date or "" }}</td>
         <td><form method="post" action="/documents/{{ d.id }}/delete" class="inline" data-confirm="Dokument wirklich löschen?">
           <input type="hidden" name="csrf" value="{{ csrf }}"><button class="link danger">löschen</button></form></td></tr>
       {% endfor %}
@@ -44,6 +44,16 @@
       <label>Titel <input name="title" placeholder="z.B. Beurteilungsbericht 1. Semester 2025/26"></label>
       <label>Art <select name="doc_type">{% for t in doc_types %}<option>{{ t }}</option>{% endfor %}</select></label>
       <label>Datum <input type="date" name="doc_date"></label>
+      {% if templates %}
+      <label>Abgleich mit leerer Vorlage
+        <select name="template">
+          <option value="auto">automatisch erkennen</option>
+          <option value="none">keinen Abgleich (ganzer Text)</option>
+          {% for t in templates %}<option value="{{ t.id }}">{{ t.title }}</option>{% endfor %}
+        </select>
+      </label>
+      <p class="muted">Bei Formularen wird nur übernommen, was gegenüber der leeren Vorlage ausgefüllt oder angekreuzt wurde.</p>
+      {% endif %}
       <button>Hochladen</button>
     </form>
 

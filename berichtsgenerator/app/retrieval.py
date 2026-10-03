@@ -11,7 +11,7 @@ import re
 from collections import Counter
 
 from . import config, llm
-from .documents import unpack_embedding
+from .documents import TEMPLATE_TYPE, unpack_embedding
 
 STOPWORDS = set(
     """aber alle allem allen aller alles als also am an ander andere anderem anderen anderer
@@ -90,7 +90,8 @@ def budgets() -> tuple[int, int]:
 
 def _doc_header(doc) -> str:
     date = f", {doc['doc_date']}" if doc["doc_date"] else ""
-    return f"--- {doc['doc_type']}: {doc['title']}{date} ---"
+    excerpt = " (Auszug: nur ausgefüllte Teile)" if doc["template_id"] else ""
+    return f"--- {doc['doc_type']}: {doc['title']}{date}{excerpt} ---"
 
 
 def build_student_context(conn, document_ids: list[int], query: str, budget: int) -> str:
@@ -124,7 +125,8 @@ def build_student_context(conn, document_ids: list[int], query: str, budget: int
 def build_kb_context(conn, query: str, budget: int) -> str:
     rows = conn.execute(
         "SELECT c.*, d.title, d.doc_type FROM chunks c JOIN documents d ON d.id = c.document_id "
-        "WHERE d.student_id IS NULL"
+        "WHERE d.student_id IS NULL AND d.doc_type != ?",
+        (TEMPLATE_TYPE,),
     ).fetchall()
     chunks = [dict(r) for r in rows]
     ranked = [(s, c) for s, c in rank_chunks(query, chunks) if s > 0]

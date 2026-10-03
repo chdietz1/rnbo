@@ -55,7 +55,8 @@ DOC_TYPES = [
     "Beobachtungsnotizen",
     "Anderes",
 ]
-KB_TYPES = ["Kantonale Vorgabe", "Leitfaden", "Lehrplan", "Schulinternes Konzept", "Musterbericht", "Anderes"]
+KB_TYPES = ["Kantonale Vorgabe", "Leitfaden", "Lehrplan", "Schulinternes Konzept", "Musterbericht",
+            documents.TEMPLATE_TYPE, "Anderes"]
 
 
 @app.middleware("http")
@@ -310,7 +311,7 @@ def student_page(request: Request, sid: int):
     with db.get_conn() as conn:
         student = auth.get_student_or_403(conn, user, sid)
         docs = conn.execute(
-            "SELECT id, title, doc_type, doc_date, filename, length(content_text) AS size, created_at "
+            "SELECT id, title, doc_type, doc_date, filename, template_id, length(content_text) AS size, created_at "
             "FROM documents WHERE student_id = ? ORDER BY COALESCE(doc_date, created_at) DESC",
             (sid,),
         ).fetchall()
@@ -327,10 +328,11 @@ def student_page(request: Request, sid: int):
         all_users = conn.execute(
             "SELECT id, display_name, username FROM users WHERE active = 1 ORDER BY display_name"
         ).fetchall()
+        templates = _templates(conn)
         db.audit(conn, user, "schueler_angesehen", f"id={sid}")
     return render(request, "student.html", {
         "student": student, "docs": docs, "reports": reports, "members": members,
-        "all_users": all_users, "doc_types": DOC_TYPES,
+        "all_users": all_users, "doc_types": DOC_TYPES, "templates": templates,
     })
 
 
@@ -397,23 +399,43 @@ async def _read_upload(form) -> tuple[str, str | None]:
     return text, None
 
 
-async def _save_document(request: Request, user, student_id: int | None, form) -> tuple[int, str]:
+def _templates(conn) -> list[dict]:
+    return [dict(r) for r in conn.execute(
+        "SELECT id, title, content_text FROM documents WHERE student_id IS NULL AND doc_type = ? ORDER BY title",
+        (documents.TEMPLATE_TYPE,),
+    )]
+
+
+async def _save_document(request: Request, user, student_id: int | None, form) -> tuple[int, str, str]:
+    """Speichert ein Dokument. Gibt (ID, Titel, Hinweis zum Vorlagen-Abgleich) zurück."""
     text, filename = await _read_upload(form)
     title = form.get("title", "").strip() or (filename or "Eingefügter Text")
     doc_type, doc_date = form.get("doc_type", "Anderes"), form.get("doc_date", "").strip() or None
+    choice = form.get("template", "auto")
 
-    def work() -> int:  # im Threadpool, da die Embedding-Berechnung dauern kann
+    def work() -> tuple[int, str]:  # im Threadpool, da die Embedding-Berechnung dauern kann
         with db.get_conn() as conn:
+            content, template, note = text, None, ""
+            if student_id is not None:
+                content, template = documents.apply_template(text, _templates(conn), choice)
+                if template:
+                    note = f" Abgleich mit Vorlage «{template['title']}»: nur ausgefüllte Teile übernommen."
+                    if not content:
+                        content = "(Keine ausgefüllten Inhalte gegenüber der Vorlage gefunden.)"
+                        note += " Achtung: Es wurde nichts Ausgefülltes gefunden."
             cur = conn.execute(
-                "INSERT INTO documents (student_id, title, doc_type, doc_date, filename, content_text, uploaded_by, created_at) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (student_id, title, doc_type, doc_date, filename, text, user["id"], db.now()),
+                "INSERT INTO documents (student_id, title, doc_type, doc_date, filename, content_text, full_text, "
+                "template_id, uploaded_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (student_id, title, doc_type, doc_date, filename, content, text if template else None,
+                 template["id"] if template else None, user["id"], db.now()),
             )
-            documents.index_document(conn, cur.lastrowid, text)
+            if doc_type != documents.TEMPLATE_TYPE:
+                documents.index_document(conn, cur.lastrowid, content)
             db.audit(conn, user, "dokument_hochgeladen", f"id={cur.lastrowid} schueler={student_id}")
-            return cur.lastrowid
+            return cur.lastrowid, note
 
-    return await run_in_threadpool(work), title
+    did, note = await run_in_threadpool(work)
+    return did, title, note
 
 
 @app.post("/students/{sid}/documents")
@@ -423,10 +445,10 @@ async def document_upload(request: Request, sid: int):
     with db.get_conn() as conn:
         auth.get_student_or_403(conn, user, sid)
     try:
-        _, title = await _save_document(request, user, sid, form)
+        _, title, note = await _save_document(request, user, sid, form)
     except documents.ExtractionError as e:
         return redirect(f"/students/{sid}", f"Fehler: {e}", request)
-    return redirect(f"/students/{sid}", f"Dokument «{title}» gespeichert.", request)
+    return redirect(f"/students/{sid}", f"Dokument «{title}» gespeichert.{note}", request)
 
 
 def _get_document(conn, user, did: int) -> dict:
@@ -443,8 +465,39 @@ def document_view(request: Request, did: int):
     user = require_user(request)
     with db.get_conn() as conn:
         doc = _get_document(conn, user, did)
+        templates = _templates(conn) if doc["student_id"] is not None else []
+        used = next((t for t in templates if t["id"] == doc.get("template_id")), None)
         db.audit(conn, user, "dokument_angesehen", f"id={did}")
-    return render(request, "document.html", {"doc": doc})
+    return render(request, "document.html", {"doc": doc, "templates": templates, "used_template": used})
+
+
+@app.post("/documents/{did}/template")
+async def document_template(request: Request, did: int):
+    user = require_user(request)
+    form = await form_data(request)
+
+    def work() -> str:
+        with db.get_conn() as conn:
+            doc = _get_document(conn, user, did)
+            if doc["student_id"] is None:
+                raise HTTPException(400, "Nur für Unterlagen in einem Dossier.")
+            original = doc.get("full_text") or doc["content_text"]
+            content, template = documents.apply_template(original, _templates(conn), form.get("template", "auto"))
+            if template and not content:
+                content = "(Keine ausgefüllten Inhalte gegenüber der Vorlage gefunden.)"
+            conn.execute(
+                "UPDATE documents SET content_text = ?, full_text = ?, template_id = ? WHERE id = ?",
+                (content, original if template else None, template["id"] if template else None, did),
+            )
+            documents.index_document(conn, did, content)
+            db.audit(conn, user, "dokument_abgeglichen", f"id={did}")
+            if template:
+                return f"Abgeglichen mit «{template['title']}»."
+            return "Keine passende Vorlage gefunden. Der vollständige Text wird verwendet." \
+                if form.get("template", "auto") == "auto" else "Vollständiger Text wird verwendet."
+
+    msg = await run_in_threadpool(work)
+    return redirect(f"/documents/{did}", msg, request)
 
 
 @app.post("/documents/{did}/delete")
@@ -481,7 +534,7 @@ async def knowledge_upload(request: Request):
     user = require_admin(request)
     form = await form_data(request)
     try:
-        _, title = await _save_document(request, user, None, form)
+        _, title, _note = await _save_document(request, user, None, form)
     except documents.ExtractionError as e:
         return redirect("/knowledge", f"Fehler: {e}", request)
     return redirect("/knowledge", f"«{title}» zur Wissensbasis hinzugefügt.", request)
@@ -521,7 +574,8 @@ def generate_page(request: Request, sid: int):
             (sid,),
         ).fetchall()
         types = _report_types(conn)
-    return render(request, "generate.html", {"student": student, "docs": docs, "types": types})
+        skills = _skills(conn, user)
+    return render(request, "generate.html", {"student": student, "docs": docs, "types": types, "skills": skills})
 
 
 async def _json_body(request: Request) -> dict:
@@ -634,8 +688,9 @@ def report_page(request: Request, rid: int):
             "(SELECT display_name FROM users WHERE id = ?) AS updated",
             (report["created_by"], report["updated_by"]),
         ).fetchone()
+        skills = _skills(conn, user)
     return render(request, "report.html", {
-        "report": report, "student": student, "authors": authors,
+        "report": report, "student": student, "authors": authors, "skills": skills,
         "revise_actions": prompts.REVISE_ACTIONS,
     })
 
@@ -693,6 +748,73 @@ def report_docx(request: Request, rid: int):
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(name)}"},
     )
+
+
+# --------------------------------------------------------------------------- Skills (gespeicherte Anweisungen)
+
+
+def _skills(conn, user) -> list[dict]:
+    rows = conn.execute(
+        "SELECT s.*, u.display_name AS owner FROM skills s LEFT JOIN users u ON u.id = s.owner_id "
+        "WHERE s.owner_id = ? OR s.shared = 1 ORDER BY s.name COLLATE NOCASE",
+        (user["id"],),
+    ).fetchall()
+    return [dict(r, own=r["owner_id"] == user["id"]) for r in rows]
+
+
+def _can_edit_skill(conn, user, skill_id: int) -> dict:
+    row = conn.execute("SELECT * FROM skills WHERE id = ?", (skill_id,)).fetchone()
+    if not row or (row["owner_id"] != user["id"] and not user["is_admin"]):
+        raise HTTPException(404, "Skill nicht gefunden oder keine Berechtigung.")
+    return dict(row)
+
+
+@app.get("/skills", response_class=HTMLResponse)
+def skills_page(request: Request):
+    user = require_user(request)
+    with db.get_conn() as conn:
+        skills = _skills(conn, user)
+    return render(request, "skills.html", {"skills": skills})
+
+
+@app.post("/skills")
+async def skills_save(request: Request):
+    user = require_user(request)
+    form = await form_data(request)
+    sid = int(form.get("id") or 0)
+    with db.get_conn() as conn:
+        if form.get("action") == "delete" and sid:
+            _can_edit_skill(conn, user, sid)
+            conn.execute("DELETE FROM skills WHERE id = ?", (sid,))
+            return redirect("/skills", "Skill gelöscht.", request)
+        name, text = form.get("name", "").strip(), form.get("text", "").strip()
+        if not name or not text:
+            return redirect("/skills", "Name und Anweisung sind erforderlich.", request)
+        shared = 1 if form.get("shared") else 0
+        if sid:
+            _can_edit_skill(conn, user, sid)
+            conn.execute("UPDATE skills SET name = ?, text = ?, shared = ? WHERE id = ?", (name, text, shared, sid))
+        else:
+            conn.execute(
+                "INSERT INTO skills (owner_id, name, text, shared, created_at) VALUES (?, ?, ?, ?, ?)",
+                (user["id"], name, text, shared, db.now()),
+            )
+    return redirect("/skills", f"Skill «{name}» gespeichert.", request)
+
+
+@app.post("/api/skills")
+async def api_skill_create(request: Request):
+    user = require_user(request)
+    body = await _json_body(request)
+    name, text = str(body.get("name", "")).strip(), str(body.get("text", "")).strip()
+    if not name or not text:
+        raise HTTPException(400, "Name und Anweisung sind erforderlich.")
+    with db.get_conn() as conn:
+        cur = conn.execute(
+            "INSERT INTO skills (owner_id, name, text, shared, created_at) VALUES (?, ?, ?, ?, ?)",
+            (user["id"], name, text, 1 if body.get("shared") else 0, db.now()),
+        )
+    return {"id": cur.lastrowid, "name": name, "text": text}
 
 
 # --------------------------------------------------------------------------- Verwaltung

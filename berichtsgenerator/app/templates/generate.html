@@ -16,9 +16,21 @@
       <label>Aktuelle Beobachtungen und Stichworte
         <textarea name="observations" rows="10" placeholder="- Liest kurze Texte mit Silbenunterstützung selbstständig&#10;- Zahlenraum bis 100: Addition ohne Übertrag sicher&#10;- Sucht in der Pause vermehrt Kontakt zu Mitschülern&#10;- Förderziel Konzentration: arbeitet 15 Min. selbstständig"></textarea>
       </label>
-      <label>Zusätzliche Anweisungen (optional)
-        <textarea name="extra" rows="3" placeholder="z.B. Schwerpunkt auf Kommunikation legen; max. 2 Seiten"></textarea>
-      </label>
+      <label for="extra">Zusätzliche Anweisungen (optional)</label>
+      <select class="skill-select" data-target="extra" aria-label="Skill einfügen">
+          <option value="">Gespeicherten Skill einfügen …</option>
+          {% for s in skills %}<option value="{{ s.id }}" data-text="{{ s.text }}">{{ s.name }}{% if not s.own %} (von {{ s.owner }}){% endif %}</option>{% endfor %}
+        </select>
+      <textarea name="extra" id="extra" rows="4" placeholder="z.B. Schwerpunkt auf Kommunikation legen; max. 2 Seiten"></textarea>
+      <details class="skill-save" data-source="extra">
+        <summary>Diese Anweisung als Skill speichern</summary>
+        <div class="row">
+          <label class="grow">Name <input class="skill-name" placeholder="z.B. Schwerpunkt Kommunikation"></label>
+          <label class="check"><input type="checkbox" class="skill-shared"> mit allen teilen</label>
+          <button type="button" class="secondary skill-save-btn">Speichern</button>
+        </div>
+        <p class="muted skill-msg"></p>
+      </details>
       <fieldset>
         <legend>Unterlagen einbeziehen</legend>
         {% for d in docs %}

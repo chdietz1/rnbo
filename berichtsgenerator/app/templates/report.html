@@ -35,7 +35,21 @@
       <button type="button" class="secondary revise" data-action="{{ key }}">{{ label }}</button>
       {% endfor %}
     </div>
-    <label>Eigene Anweisung <input id="revise-instruction" placeholder="z.B. Absatz über Mathematik ergänzen um Förderziel"></label>
+    <label for="revise-instruction">Eigene Anweisung</label>
+    <select class="skill-select" data-target="revise-instruction" aria-label="Skill einfügen">
+          <option value="">Gespeicherten Skill einfügen …</option>
+          {% for s in skills %}<option value="{{ s.id }}" data-text="{{ s.text }}">{{ s.name }}{% if not s.own %} (von {{ s.owner }}){% endif %}</option>{% endfor %}
+        </select>
+    <textarea id="revise-instruction" rows="3" placeholder="z.B. Absatz über Mathematik um ein Förderziel ergänzen"></textarea>
+    <details class="skill-save" data-source="revise-instruction">
+        <summary>Diese Anweisung als Skill speichern</summary>
+        <div class="row">
+          <label class="grow">Name <input class="skill-name" placeholder="z.B. Schwerpunkt Kommunikation"></label>
+          <label class="check"><input type="checkbox" class="skill-shared"> mit allen teilen</label>
+          <button type="button" class="secondary skill-save-btn">Speichern</button>
+        </div>
+        <p class="muted skill-msg"></p>
+      </details>
     <button type="button" class="secondary revise" data-action="">Mit eigener Anweisung überarbeiten</button>
     <p class="muted" id="gen-status"></p>
     <textarea id="revise-output" rows="14" class="editor" placeholder="Vorschlag …"></textarea>

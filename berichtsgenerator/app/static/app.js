@@ -132,3 +132,45 @@ if (reportForm) {
     if (dirty) { e.preventDefault(); e.returnValue = ""; }
   });
 }
+
+// ---- Skills: gespeicherte Anweisungen einfügen und speichern
+document.querySelectorAll("select.skill-select").forEach((sel) => {
+  sel.addEventListener("change", () => {
+    const opt = sel.selectedOptions[0];
+    const target = document.getElementById(sel.dataset.target);
+    if (opt && opt.value && target) {
+      const text = opt.dataset.text || "";
+      target.value = target.value.trim() ? target.value.trim() + "\n" + text : text;
+      target.focus();
+    }
+    sel.value = "";
+  });
+});
+document.querySelectorAll("details.skill-save").forEach((box) => {
+  const btn = box.querySelector(".skill-save-btn");
+  const msg = box.querySelector(".skill-msg");
+  btn.addEventListener("click", async () => {
+    const text = document.getElementById(box.dataset.source).value.trim();
+    const name = box.querySelector(".skill-name").value.trim();
+    if (!text) { msg.textContent = "Zuerst eine Anweisung eingeben."; return; }
+    if (!name) { msg.textContent = "Bitte einen Namen angeben."; return; }
+    try {
+      const res = await fetch("/api/skills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf() },
+        body: JSON.stringify({ name, text, shared: box.querySelector(".skill-shared").checked }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      document.querySelectorAll("select.skill-select").forEach((sel) => {
+        const o = document.createElement("option");
+        o.value = data.id; o.textContent = data.name; o.dataset.text = data.text;
+        sel.appendChild(o);
+      });
+      msg.textContent = `Skill «${data.name}» gespeichert.`;
+      box.querySelector(".skill-name").value = "";
+    } catch (err) {
+      msg.textContent = "Fehler: " + err.message;
+    }
+  });
+});

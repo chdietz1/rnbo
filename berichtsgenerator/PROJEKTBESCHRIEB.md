@@ -1,6 +1,6 @@
 # Projektbeschrieb: Berichtsgenerator für die besondere Volksschule (Kanton Bern)
 
-Stand: 2. Oktober 2026
+Stand: 3. Oktober 2026
 
 Dieses Dokument fasst Ziel, Stand und offene Punkte zusammen, damit die Arbeit in einem neuen Chat
 nahtlos weitergehen kann. **Für einen neuen Chat:** dieses Dokument und das aktuelle ZIP
@@ -44,7 +44,10 @@ Rahmenbedingungen:
 | Überarbeiten mit KI | markierte Stelle oder ganzer Text: kürzer, ausführlicher, einfache Sprache, sachlicher, ressourcenorientierter, nur Rechtschreibung, eigene Anweisung |
 | Finalisieren | finaler Bericht wird automatisch Grundlage für künftige Berichte |
 | Export | Word-Datei mit Kopfzeilen und Unterschriftenzeile |
-| Berichtsarten | 8 Vorlagen, in der Oberfläche durch Admins anpassbar |
+| Berichtsarten | 9 Vorlagen, in der Oberfläche durch Admins anpassbar, u.a. «Förderbericht (Felder für BU21 / BE-Login)» nach Leitfaden der Schule |
+| Formulare | Häkchen in Word (Kontrollkästchen, alte Formularfelder, Wingdings-Symbole), Tabellen, Textfelder; ausgefüllte PDF-Formularfelder |
+| Vorlagen-Abgleich | leere Formulare als «Leere Vorlage (für Abgleich)» in der Wissensbasis; beim Upload ins Dossier wird nur das Ausgefüllte/Angekreuzte übernommen (automatisch erkannt oder manuell gewählt, nachträglich neu abgleichbar) |
+| Skills | gespeicherte Anweisungen pro Lehrperson, optional für alle geteilt; einfügbar beim Erstellen und Überarbeiten |
 | Protokoll | wer wann welches Dossier angesehen, bearbeitet, exportiert hat |
 | Löschen | ganzes Dossier inkl. aller Daten (Löschkonzept) |
 
@@ -105,6 +108,13 @@ Die Projektleitung arbeitet nicht mit GitHub; Übergabe immer als **ZIP-Datei**.
 - Start über `start-mac.command`; App nur auf dem Mac erreichbar (`127.0.0.1:8000`)
 - Demo-Konto: Benutzername `demo`, Passwort `demo-passwort`, Beispielschülerin «Lina Beispiel» (erfunden)
 - Ergebnis bisher: Demo läuft, Geschwindigkeit gut, Import funktioniert
+- Erster realer Test: Ergebnis «nicht so schlecht». Hauptproblem waren standardisierte Formulare, die nur
+  teilweise ausgefüllt sind, und nicht erkannte Häkchen → Vorlagen-Abgleich und Häkchen-Erkennung eingebaut
+  (noch nicht mit echten Formularen der Schule getestet)
+- Wissensbasis der Schule (bisher): «Leitfaden Beurteilungs-/Förderberichte 2025/26» (BU21, BE-Login,
+  Standardtext «Allgemeine Anmerkungen»), «Zeitplan Beurteilungsberichte», «Befähigungsbereiche und deren Inhalte» (PDF).
+  Mit 8192 Tokens Kontext passen nur ca. 4'000 Zeichen Wissensbasis pro Bericht; der Standardtext wird gefunden,
+  die Befähigungsbereiche nicht immer. Grösserer Rechner/Kontext hilft.
 - **Ausstehend:** echter Test mit realen (bzw. anonymisierten) Unterlagen, um zu prüfen, ob das Modell
   die Unterlagen wirklich einbezieht und nichts erfindet
 
@@ -135,6 +145,8 @@ Netzwerkkabel, feste IP, USV, verschlüsselte Backups, abschliessbarer Standort,
 
 - Alte Word-Dateien `.doc` und Pages-Dateien werden nicht gelesen (vorher als .docx speichern).
 - Gescannte PDFs ohne Text werden nicht gelesen (keine Texterkennung/OCR).
+- Vorlagen-Abgleich bei PDFs funktioniert nur, wenn Vorlage und ausgefülltes PDF gleich aufgebaut sind;
+  bei «flachen» PDFs (ausgedruckt und gescannt, oder als Bild) nicht.
 - Unterlagen nur einzeln hochladbar.
 - Nach einem Update bleibt man angemeldet, wenn der Ordner `data` übernommen wird (der Sitzungsschlüssel
   liegt dort). **Bewusst so belassen** (Demo); vor dem Schulbetrieb prüfen.
@@ -149,6 +161,7 @@ Netzwerkkabel, feste IP, USV, verschlüsselte Backups, abschliessbarer Standort,
 
 ## 7. Mögliche nächste Schritte (Ideen-Speicher)
 
+- Vorlagen-Abgleich mit echten Formularen der Schule testen (leere + ausgefüllte Version)
 - Auswertung des echten Tests; Anweisungen an das Modell (Systemprompt, Berichtsarten) nachschärfen,
   idealerweise mit anonymisierten Musterberichten der Schule
 - Berichtsarten an die offiziellen Vorlagen der Schule bzw. der BKD anpassen
@@ -170,3 +183,4 @@ Netzwerkkabel, feste IP, USV, verschlüsselte Backups, abschliessbarer Standort,
 4. Mac-Startdatei, Demo-Daten, Unterstützung für Python 3.9
 5. Fehler behoben: Anmeldung auf dem Mac schlug fehl (Passwortverfahren scrypt fehlt im Mac-Python → PBKDF2)
 6. Sammel-Import von Dossiers aus Excel/CSV
+7. Häkchen-Erkennung, Abgleich mit leeren Vorlagen, Skills, Berichtsart «Förderbericht BU21»
