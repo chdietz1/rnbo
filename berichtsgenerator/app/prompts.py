@@ -229,13 +229,18 @@ def build_generation_messages(
         f"Jahrgang: {student.get('birth_year') or '[unbekannt]'}\n"
         f"Berichtsperiode / Datum: {period or '[unbekannt]'}"
     )
-    parts.append(
-        "=== AKTUELLE BEOBACHTUNGEN UND NOTIZEN DER LEHRPERSON ===\n"
-        + (observations.strip() or "(keine zusätzlichen Beobachtungen angegeben)")
-    )
     parts.append("=== AUFTRAG ===\n" + report_type["instructions"])
     if extra.strip():
         parts.append("=== ZUSÄTZLICHE ANWEISUNGEN DER LEHRPERSON ===\n" + extra.strip())
+    # Stichworte zuletzt: kleine Modelle beachten das Ende der Anfrage am stärksten
+    if observations.strip():
+        parts.append(
+            "=== AKTUELLE BEOBACHTUNGEN UND STICHWORTE DER LEHRPERSON (wichtigste und aktuellste Quelle) ===\n"
+            + observations.strip()
+            + "\n\nBaue jedes dieser Stichworte inhaltlich in den Text ein."
+        )
+    else:
+        parts.append("=== AKTUELLE BEOBACHTUNGEN DER LEHRPERSON ===\n(keine angegeben; stütze dich auf die Unterlagen)")
     parts.append(
         "Schreibe jetzt den Text. Gib nur den Text selbst aus, ohne Vorbemerkung oder Kommentar."
     )

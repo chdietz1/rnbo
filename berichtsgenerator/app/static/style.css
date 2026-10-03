@@ -11,6 +11,7 @@
   --warn: #fff4e0;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   margin: 0; background: var(--bg); color: var(--text);
   font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
@@ -90,3 +91,11 @@ details.skill-edit > summary::-webkit-details-marker { display: none; }
 details.skill-edit[open] > summary { margin-bottom: 10px; }
 .label-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .label-row label { margin-bottom: 4px; }
+.bf-area { border-bottom: 1px solid var(--border); padding: 6px 0; }
+.bf-area:last-child { border-bottom: 0; }
+.bf-area-body { padding: 6px 0 6px 24px; }
+.bf-up { margin-bottom: 4px; }
+.bf-items { padding: 2px 0 6px 24px; }
+.bf-items label.check { font-size: .93em; }
+.small-note { font-size: 12px; margin: 2px 0 0; }
+input[type=checkbox]:disabled + strong { opacity: .5; }

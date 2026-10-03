@@ -192,3 +192,78 @@ document.querySelectorAll("details.skill-save").forEach((box) => {
     }
   });
 });
+
+// ---- Seite «Befähigungsschwerpunkte planen»
+const bfForm = document.getElementById("bf-form");
+if (bfForm) {
+  const out = document.getElementById("output");
+  const status = document.getElementById("gen-status");
+  const genBtn = document.getElementById("gen-btn");
+  const stopBtn = document.getElementById("stop-btn");
+  const countEl = document.getElementById("bf-count");
+  const areaChecks = [...bfForm.querySelectorAll(".bf-area-check")];
+
+  const updateAreas = () => {
+    const n = areaChecks.filter((c) => c.checked).length;
+    countEl.textContent = n ? `(${n} gewählt)` : "";
+    areaChecks.forEach((c) => {
+      c.closest(".bf-area").querySelector(".bf-area-body").hidden = !c.checked;
+      c.disabled = !c.checked && n >= 3; // höchstens drei Bereiche
+    });
+  };
+  areaChecks.forEach((c) => c.addEventListener("change", updateAreas));
+  bfForm.querySelectorAll(".bf-up-check").forEach((c) =>
+    c.addEventListener("change", () => (c.closest(".bf-up").querySelector(".bf-items").hidden = !c.checked))
+  );
+
+  const collectAreas = () =>
+    areaChecks.filter((c) => c.checked).map((c) => {
+      const area = c.closest(".bf-area");
+      return {
+        num: area.dataset.num,
+        notes: area.querySelector(".bf-notes").value,
+        lp21: area.querySelector(".bf-lp21").value,
+        unterpunkte: [...area.querySelectorAll(".bf-up")]
+          .filter((u) => u.querySelector(".bf-up-check").checked)
+          .map((u) => ({
+            idx: Number(u.dataset.idx),
+            items: [...u.querySelectorAll(".bf-item:checked")].map((i) => Number(i.value)),
+          })),
+      };
+    });
+
+  bfForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const areas = collectAreas();
+    if (!areas.length) { status.textContent = "Bitte mindestens einen Befähigungsbereich wählen."; return; }
+    const missing = areas.find((a) => !a.unterpunkte.length);
+    if (missing) {
+      status.textContent = `Bitte bei Bereich ${missing.num} mindestens einen Unterpunkt anhaken.`;
+      return;
+    }
+    if (out.value.trim() && !confirm("Das aktuelle Ergebnis wird ersetzt. Fortfahren?")) return;
+    const fd = new FormData(bfForm);
+    genBtn.disabled = true;
+    stopBtn.hidden = false;
+    await streamInto("/api/befaehigungen", {
+      student_id: Number(bfForm.dataset.student),
+      period: fd.get("period") || "",
+      general_notes: fd.get("general_notes") || "",
+      document_ids: fd.getAll("document_ids").map(Number),
+      kb_ids: fd.getAll("kb_ids").map(Number),
+      areas,
+    }, out, status);
+    genBtn.disabled = false;
+    stopBtn.hidden = true;
+  });
+  stopBtn.addEventListener("click", () => controller && controller.abort());
+
+  document.getElementById("save-form").addEventListener("submit", () => {
+    const save = document.getElementById("save-form");
+    const fd = new FormData(bfForm);
+    save.elements.period.value = fd.get("period") || "";
+    const notes = collectAreas().map((a) => `${a.num}: ${a.notes.trim()}`).filter((l) => l.length > 4);
+    const general = (fd.get("general_notes") || "").trim();
+    save.elements.observations.value = [general, ...notes].filter(Boolean).join("\n");
+  });
+}

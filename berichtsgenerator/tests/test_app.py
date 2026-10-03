@@ -230,3 +230,34 @@ def test_long_instructions_shrink_document_budget():
     s, kb = retrieval.budgets(fixed)
     total_tokens = (fixed + s + kb) // retrieval.CHARS_PER_TOKEN + retrieval.ANSWER_RESERVE_TOKENS
     assert total_tokens <= config.NUM_CTX
+
+
+def test_befaehigungen_flow():
+    with TestClient(app) as c:
+        login(c, "admin", "geheim12345")
+        token = csrf(c, "/students")
+        r = c.post("/students", data={"csrf": token, "first_name": "Bea", "last_name": "Plan"})
+        sid = int(r.url.path.rsplit("/", 1)[1])
+        assert "Befähigungsschwerpunkte planen" in r.text
+        page = c.get(f"/students/{sid}/befaehigungen").text
+        assert "Sich selbst sein und werden" in page and "Interesse an Neuem zeigen und entwickeln" in page
+        body = {"student_id": sid, "general_notes": "ist im 10. SJ", "areas": [
+            {"num": "I", "unterpunkte": [{"idx": 0, "items": [1]}], "notes": "Erdung suchen, Sport treiben"},
+            {"num": "VI", "unterpunkte": [{"idx": 0, "items": [0]}], "notes": "Donnerstag Backen",
+             "lp21": "Personale Kompetenzen – Selbstständigkeit"},
+        ]}
+        r = c.post("/api/befaehigungen", headers={"X-CSRF-Token": token}, json=body)
+        assert r.status_code == 200
+        text = r.text
+        assert "[x] I Sich selbst sein und werden" in text and "[x] VI Dranbleiben" in text
+        assert "### 1 Sich selbst sein und werden" in text and "### 2 Dranbleiben und bewältigen" in text
+        assert "- Den Körper als ein zusammengehörendes Ganzes erleben" in text
+        assert "Erdung suchen, Sport treiben" in text and "Donnerstag Backen" in text  # Stichworte ans Modell
+        assert text.count("Personale Kompetenzen – Selbstständigkeit") == 2
+        bad = dict(body, areas=[{"num": "I", "unterpunkte": []}])
+        assert c.post("/api/befaehigungen", headers={"X-CSRF-Token": token}, json=bad).status_code == 400
+        r = c.post(f"/students/{sid}/reports", data={"csrf": token, "title": "Förder- und Befähigungsschwerpunkte",
+                                                      "content": text})
+        assert "Förder- und Befähigungsschwerpunkte" in r.text
+        rid = int(r.url.path.rsplit("/", 1)[1])
+        assert c.get(f"/reports/{rid}/docx").status_code == 200

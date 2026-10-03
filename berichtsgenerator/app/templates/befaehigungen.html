@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Befähigungsschwerpunkte{% endblock %}
+{% block content %}
+<p><a href="/students/{{ student.id }}">← {{ student.first_name }} {{ student.last_name }}</a></p>
+<h1>Befähigungsschwerpunkte planen: {{ student.first_name }} {{ student.last_name }}</h1>
+<p class="muted">Sie wählen Bereiche, Unterpunkte und Unter-Unter-Punkte. Die App übernimmt Kästchen, Kommentar und Aufzählungen wörtlich aus dem Katalog. Das Modell schreibt pro Bereich nur die Ausgangslage, den LP21-Bezug (WAS) und den Kontext (WO), gestützt auf Ihre Stichworte und die Unterlagen.</p>
+
+<div class="grid2 wide-right">
+  <section class="card">
+    <form id="bf-form" data-student="{{ student.id }}">
+      <label>Planung für <input name="period" placeholder="z.B. Schuljahr 2026/27"></label>
+
+      <fieldset>
+        <legend>Befähigungsbereiche (2–3 wählen) <span class="muted" id="bf-count"></span></legend>
+        {% for a in catalogue %}
+        <div class="bf-area" data-num="{{ a.num }}">
+          <label class="check bf-area-label"><input type="checkbox" class="bf-area-check"> <strong>{{ a.num }} {{ a.name }}</strong></label>
+          <div class="bf-area-body" hidden>
+            {% for u in a.unterpunkte %}
+            {% set ui = loop.index0 %}
+            <div class="bf-up" data-idx="{{ ui }}">
+              <label class="check"><input type="checkbox" class="bf-up-check"> {{ u.title }}</label>
+              <div class="bf-items" hidden>
+                {% for item in u["items"] %}
+                <label class="check"><input type="checkbox" class="bf-item" value="{{ loop.index0 }}"> {{ item }}</label>
+                {% endfor %}
+                <p class="muted small-note">Nichts angehakt = alle drei Punkte.</p>
+              </div>
+            </div>
+            {% endfor %}
+            <label>Stichworte zu diesem Bereich
+              <textarea class="bf-notes" rows="4" placeholder="z.B.&#10;- soll Sicherheit in neuen Situationen gewinnen&#10;- Donnerstagmorgen Backen auf der Wohngruppe"></textarea>
+            </label>
+            <label>Bezug LP21 (WAS)
+              <select class="bf-lp21">
+                <option value="auto">automatisch wählen lassen</option>
+                {% for t in lp21 %}<option>{{ t }}</option>{% endfor %}
+              </select>
+            </label>
+          </div>
+        </div>
+        {% endfor %}
+      </fieldset>
+
+      <label>Allgemeine Stichworte (gelten für alle Bereiche, optional)
+        <textarea name="general_notes" rows="3" placeholder="z.B. ist im 10. Schuljahr; Übergang ins Berufsleben steht an"></textarea>
+      </label>
+
+      <fieldset>
+        <legend>Unterlagen einbeziehen</legend>
+        {% for d in docs %}
+        <label class="check"><input type="checkbox" name="document_ids" value="{{ d.id }}" checked>
+          {{ d.title }} <span class="muted">({{ d.doc_type }}{% if d.doc_date %}, {{ d.doc_date }}{% endif %})</span></label>
+        {% else %}
+        <p class="muted">Keine Unterlagen vorhanden.</p>
+        {% endfor %}
+      </fieldset>
+      <fieldset>
+        <legend>Grundlagen aus der Wissensbasis</legend>
+        {% for k in kb_docs %}
+        <label class="check"><input type="checkbox" name="kb_ids" value="{{ k.id }}" {% if k.doc_type == "Lehrplan" %}checked{% endif %}>
+          {{ k.title }} <span class="muted">({{ k.doc_type }})</span></label>
+        {% else %}
+        <p class="muted">Die Wissensbasis ist noch leer.</p>
+        {% endfor %}
+        {% if kb_docs %}<p class="muted">Vorausgewählt sind Dokumente der Art «Lehrplan». Den Befähigungskatalog braucht es hier nicht, er ist eingebaut.</p>{% endif %}
+      </fieldset>
+
+      <button type="submit" id="gen-btn">Texte generieren</button>
+      <button type="button" id="stop-btn" class="secondary" hidden>Abbrechen</button>
+      <p class="muted" id="gen-status"></p>
+    </form>
+  </section>
+
+  <section class="card">
+    <form method="post" action="/students/{{ student.id }}/reports" id="save-form">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="period">
+      <input type="hidden" name="observations">
+      <label>Titel <input name="title" value="{{ title }}"></label>
+      <label>Ergebnis (kann direkt bearbeitet werden)
+        <textarea name="content" id="output" rows="32" class="editor"></textarea>
+      </label>
+      <p class="muted" id="sources"></p>
+      <button id="save-btn">Als Entwurf speichern</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -48,6 +48,7 @@ Rahmenbedingungen:
 | Formulare | Häkchen in Word (Kontrollkästchen, alte Formularfelder, Wingdings-Symbole), Tabellen, Textfelder; ausgefüllte PDF-Formularfelder |
 | Vorlagen-Abgleich | leere Formulare als «Leere Vorlage (für Abgleich)» in der Wissensbasis; beim Upload ins Dossier wird nur das Ausgefüllte/Angekreuzte übernommen (automatisch erkannt oder manuell gewählt, nachträglich neu abgleichbar) |
 | Grundlagen-Auswahl | beim Erstellen einzelne Wissensbasis-Dokumente an-/abwählen; jedes gewählte Dokument erhält einen festen Anteil am Platz; unter dem Text wird angezeigt, aus welchen Dokumenten wie viele Abschnitte ans Modell gingen |
+| Befähigungsschwerpunkte planen | eigene Seite pro Kind: Lehrperson wählt 1–3 Befähigungsbereiche, Unterpunkte, Unter-Unter-Punkte, Stichworte und LP21-Bezug pro Bereich; die App setzt Kästchen, Kommentar, Titel und Aufzählungen wörtlich aus dem Katalog (app/befaehigungen.py); das Modell schreibt pro Bereich nur Ausgangslage, WAS und WO (kurzer Auftrag, Stichworte zuletzt); ersetzt den langen Skill |
 | Skills | gespeicherte Anweisungen pro Lehrperson, optional für alle geteilt; einfügbar beim Erstellen und Überarbeiten |
 | Protokoll | wer wann welches Dossier angesehen, bearbeitet, exportiert hat |
 | Löschen | ganzes Dossier inkl. aller Daten (Löschkonzept) |
@@ -197,3 +198,4 @@ Netzwerkkabel, feste IP, USV, verschlüsselte Backups, abschliessbarer Standort,
 7. Häkchen-Erkennung, Abgleich mit leeren Vorlagen, Skills, Berichtsart «Förderbericht BU21»
 8. Skills-Seite mit sichtbaren Knöpfen; Wissensbasis-Auswahl mit fairer Platzverteilung und Quellenanzeige (LP21-Bezug kam vorher nicht beim Modell an)
 9. Platzberechnung zieht die Länge von Auftrag, Stichworten und Skills ab (vorher lief die Anfrage bei langen Skills über das Kontextfenster); Anzeige «Umfang der Anfrage: ca. X von Y Tokens»
+10. Seite «Befähigungsschwerpunkte planen» (der lange Ein-Schritt-Skill überforderte das 12B-Modell: erfundene Unterpunkte, ignorierte Stichworte); bei allen Berichtsarten stehen die Stichworte jetzt am Schluss der Anfrage

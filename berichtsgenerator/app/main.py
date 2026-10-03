@@ -20,7 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import auth, config, db, documents, importer, llm, prompts, retrieval
+from . import auth, befaehigungen, config, db, documents, importer, llm, prompts, retrieval
 from .auth import LoginRequired, check_csrf, require_admin, require_user
 from .export import report_to_docx
 
@@ -575,10 +575,7 @@ def generate_page(request: Request, sid: int):
         ).fetchall()
         types = _report_types(conn)
         skills = _skills(conn, user)
-        kb_docs = conn.execute(
-            "SELECT id, title, doc_type FROM documents WHERE student_id IS NULL AND doc_type != ? ORDER BY doc_type, title",
-            (documents.TEMPLATE_TYPE,),
-        ).fetchall()
+        kb_docs = _kb_docs(conn)
     return render(request, "generate.html", {"student": student, "docs": docs, "types": types,
                                              "skills": skills, "kb_docs": kb_docs})
 
@@ -646,6 +643,91 @@ async def api_generate(request: Request):
     response.headers["X-Context-Tokens"] = str(config.NUM_CTX)
     # Welche Grundlagen das Modell erhalten hat (für die Anzeige unter dem Text)
     response.headers["X-KB-Sources"] = quote(json.dumps(kb_sources, ensure_ascii=False))
+    return response
+
+
+# --------------------------------------------------------------------------- Befähigungsschwerpunkte planen
+
+
+def _kb_docs(conn):
+    return conn.execute(
+        "SELECT id, title, doc_type FROM documents WHERE student_id IS NULL AND doc_type != ? ORDER BY doc_type, title",
+        (documents.TEMPLATE_TYPE,),
+    ).fetchall()
+
+
+@app.get("/students/{sid}/befaehigungen", response_class=HTMLResponse)
+def befaehigungen_page(request: Request, sid: int):
+    user = require_user(request)
+    with db.get_conn() as conn:
+        student = auth.get_student_or_403(conn, user, sid)
+        docs = conn.execute(
+            "SELECT id, title, doc_type, doc_date FROM documents WHERE student_id = ? "
+            "ORDER BY COALESCE(doc_date, created_at) DESC",
+            (sid,),
+        ).fetchall()
+        kb_docs = _kb_docs(conn)
+    return render(request, "befaehigungen.html", {
+        "student": student, "docs": docs, "kb_docs": kb_docs, "catalogue": befaehigungen.CATALOGUE,
+        "lp21": befaehigungen.LP21_UEBERFACHLICH, "title": befaehigungen.TITLE,
+    })
+
+
+@app.post("/api/befaehigungen")
+async def api_befaehigungen(request: Request):
+    user = require_user(request)
+    body = await _json_body(request)
+    sid = int(body.get("student_id", 0))
+    try:
+        areas = befaehigungen.parse_selection(body.get("areas", []))
+    except befaehigungen.SelectionError as e:
+        raise HTTPException(400, str(e))
+    doc_ids = [int(x) for x in body.get("document_ids", [])]
+    kb_ids = [int(x) for x in body["kb_ids"]] if "kb_ids" in body else None
+    general = str(body.get("general_notes", "")).strip()
+    period = str(body.get("period", "")).strip()
+
+    def prepare():
+        with db.get_conn() as conn:
+            student = auth.get_student_or_403(conn, user, sid)
+            allowed = []
+            if doc_ids:
+                marks = ",".join("?" * len(doc_ids))
+                allowed = sorted(r["id"] for r in conn.execute(
+                    f"SELECT id FROM documents WHERE student_id = ? AND id IN ({marks})", [sid, *doc_ids]))
+            # Unterlagen und Grundlagen einmal für alle Bereiche auswählen: gleicher Anfang jeder Anfrage
+            query = "\n".join(befaehigungen.area_query(a) for a in areas) + "\n" + general
+            fixed = (len(prompts.SYSTEM_PROMPT) + 2500 + len(general)
+                     + max(len(befaehigungen.area_query(a)) for a in areas))
+            s_budget, kb_budget = retrieval.budgets(fixed)
+            student_ctx = retrieval.build_student_context(conn, allowed, query, s_budget)
+            kb_ctx, kb_sources = retrieval.build_kb_context(conn, query, kb_budget, kb_ids)
+            db.audit(conn, user, "befaehigungen_generiert",
+                     f"schueler={sid} bereiche={','.join(a['num'] for a in areas)} dokumente={len(allowed)}")
+            return student, student_ctx, kb_ctx, kb_sources
+
+    student, student_ctx, kb_ctx, kb_sources = await run_in_threadpool(prepare)
+    all_messages = [
+        befaehigungen.build_area_messages(area=a, student=student, period=period, general_notes=general,
+                                          student_context=student_ctx, kb_context=kb_ctx)
+        for a in areas
+    ]
+
+    async def gen():
+        yield befaehigungen.build_header(areas) + "\n"
+        for n, (area, messages) in enumerate(zip(areas, all_messages), start=1):
+            try:
+                answer = await llm.chat_complete(messages)
+            except llm.LLMError as e:
+                yield f"\n[FEHLER: {e}]"
+                return
+            yield "\n" + befaehigungen.assemble_area(n, area, befaehigungen.parse_area_output(answer)) + "\n"
+
+    response = StreamingResponse(gen(), media_type="text/plain; charset=utf-8", headers={"X-Accel-Buffering": "no"})
+    response.headers["X-KB-Sources"] = quote(json.dumps(kb_sources, ensure_ascii=False))
+    response.headers["X-Prompt-Tokens"] = str(max(
+        sum(retrieval.estimate_tokens(m["content"]) for m in msgs) for msgs in all_messages))
+    response.headers["X-Context-Tokens"] = str(config.NUM_CTX)
     return response
 
 

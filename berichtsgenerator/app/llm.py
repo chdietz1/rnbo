@@ -49,6 +49,14 @@ async def chat_stream(messages: list[dict]) -> AsyncIterator[str]:
         ) from e
 
 
+async def chat_complete(messages: list[dict]) -> str:
+    """Wie chat_stream, liefert aber die ganze Antwort auf einmal."""
+    parts = []
+    async for piece in chat_stream(messages):
+        parts.append(piece)
+    return "".join(parts)
+
+
 def embed(texts: list[str]) -> list[list[float]] | None:
     """Liefert Embeddings oder None, wenn kein Embedding-Modell verfügbar ist."""
     if config.LLM_BACKEND == "mock" or not config.EMBED_MODEL or not texts:
@@ -92,6 +100,16 @@ def status() -> dict:
 async def _mock_stream(messages: list[dict]) -> AsyncIterator[str]:
     """Platzhalter-Ausgabe für Tests und Demos ohne installiertes Modell."""
     user = messages[-1]["content"]
+    if "AUSGANGSLAGE:" in user:  # Befähigungsschwerpunkte: verlangtes Format nachbilden
+        notes = user.rsplit("(wichtigste und aktuellste Quelle) ===", 1)[-1].split("Schreibe jetzt")[0].strip()
+        text = (
+            f"AUSGANGSLAGE:\nTestausgabe (mock). Stichworte: {notes.replace(chr(10), ' ')}\n"
+            + ("LP21:\nPersonale Kompetenzen – Selbstständigkeit\n" if "LP21:" in user else "")
+            + "WAS:\nTestsatz zum Bezug.\nWO:\nTestsatz zum Kontext.\n"
+        )
+        for i in range(0, len(text), 20):
+            yield text[i : i + 20]
+        return
     text = (
         "## Hinweis\n"
         "Dies ist eine Testausgabe (BG_LLM_BACKEND=mock). Es wurde kein Sprachmodell verwendet.\n\n"

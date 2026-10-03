@@ -29,6 +29,8 @@ def report_to_docx(report: dict, student: dict, author: str, school: str) -> byt
         if not line.strip():
             continue
         line = re.sub(r"\*\*(.+?)\*\*", r"\1", line)
+        line = re.sub(r"^\[x\] ", "☒ ", line)
+        line = re.sub(r"^\[ \] ", "☐ ", line)
         if line.startswith("### "):
             d.add_heading(line[4:].strip(), level=3)
         elif line.startswith("## "):

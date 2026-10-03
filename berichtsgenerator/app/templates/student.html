@@ -3,7 +3,8 @@
 {% block content %}
 <h1>{{ student.first_name }} {{ student.last_name }}
   <span class="muted">{{ student.class_name or "" }}{% if student.birth_year %} · Jg. {{ student.birth_year }}{% endif %}</span></h1>
-<p><a class="button" href="/students/{{ student.id }}/generate">Neuen Bericht erstellen</a></p>
+<p class="row"><a class="button" href="/students/{{ student.id }}/generate">Neuen Bericht erstellen</a>
+  <a class="button secondary" href="/students/{{ student.id }}/befaehigungen">Befähigungsschwerpunkte planen</a></p>
 
 <div class="grid2">
   <section class="card">
