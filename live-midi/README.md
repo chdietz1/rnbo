@@ -13,7 +13,7 @@ Smartphone B ─┘                         └─ MIDI-Kanal 2 (Person B)
 - Person A sendet auf **MIDI-Kanal 1**, Person B auf **MIDI-Kanal 2**.
 - Jeder Button sendet eine eigene Note: Note On beim Drücken, Note Off beim Loslassen.
   Voreinstellung: Button 1–6 = Note 36–41 (C1–F1).
-- Lädt jemand die Seite neu, behält er seine Rolle.
+- Wer die Seite neu lädt, behält die eigene Rolle.
 - Wenn ein Handy die Verbindung verliert, werden seine Noten automatisch beendet.
 - Auf der Host-Seite lässt sich jede Rolle zurücksetzen, damit eine andere Person sie übernehmen kann.
 
