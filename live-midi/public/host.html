@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live MIDI Host</title>
+<style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #111; color: #eee; font-family: system-ui, -apple-system, sans-serif; }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px; display: grid; gap: 24px;
+        grid-template-columns: 360px 1fr; }
+    @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+    h1 { font-size: 1.3rem; margin: 0 0 12px; }
+    h2 { font-size: 1rem; margin: 0 0 8px; }
+    .card { background: #1c1c1c; border-radius: 14px; padding: 18px; }
+    #qr { background: #fff; border-radius: 10px; padding: 12px; }
+    #qr img { width: 100%; display: block; }
+    #phoneUrl { font-family: monospace; font-size: .85rem; word-break: break-all; opacity: .7; margin-top: 8px; }
+    .person { display: flex; flex-direction: column; gap: 10px; }
+    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: #555; }
+    .dot.on { background: #2ecc71; }
+    .dot.away { background: #f1c40f; }
+    .pads { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pad { width: 44px; height: 44px; border-radius: 8px; opacity: .35; display: flex;
+        align-items: center; justify-content: center; font-weight: 700; transition: opacity .08s, transform .08s; }
+    .pad.down { opacity: 1; transform: scale(1.1); }
+    select, button { font: inherit; background: #2a2a2a; color: #eee; border: 1px solid #444;
+        border-radius: 8px; padding: 6px 10px; }
+    button { cursor: pointer; }
+    #log { font-family: monospace; font-size: .8rem; height: 180px; overflow: auto; opacity: .8;
+        white-space: pre; background: #0b0b0b; border-radius: 8px; padding: 8px; }
+    .warn { color: #f39c12; }
+    .right { display: grid; gap: 16px; align-content: start; }
+</style>
+</head>
+<body>
+<main>
+    <section class="card">
+        <h1>Scannen zum Mitmachen</h1>
+        <div id="qr"><img src="/qr.svg" alt="QR-Code"></div>
+        <div id="phoneUrl"></div>
+        <p style="font-size:.9rem;opacity:.7">Wer zuerst scannt, wird Person A, die nächste Person wird Person B.</p>
+    </section>
+
+    <section class="right">
+        <div class="card">
+            <h2>MIDI-Ausgang</h2>
+            <div class="row">
+                <select id="midiOut"><option>– kein MIDI –</option></select>
+                <span id="midiStatus"></span>
+            </div>
+        </div>
+        <div class="card person" id="person-A"></div>
+        <div class="card person" id="person-B"></div>
+        <div class="card">
+            <div class="row" style="justify-content:space-between">
+                <h2>Log</h2>
+                <button id="resetAll">Beide Rollen zurücksetzen</button>
+            </div>
+            <div id="log"></div>
+        </div>
+    </section>
+</main>
+
+<script src="config.js"></script>
+<script>
+const config = window.LIVE_MIDI_CONFIG;
+const logEl = document.getElementById("log");
+const midiSelect = document.getElementById("midiOut");
+const midiStatus = document.getElementById("midiStatus");
+
+function log(text) {
+    const t = new Date().toLocaleTimeString();
+    logEl.textContent = `${t}  ${text}\n` + logEl.textContent.slice(0, 5000);
+}
+
+fetch("/info").then(r => r.json()).then(i => {
+    document.getElementById("phoneUrl").textContent = i.phoneUrl;
+}).catch(() => {});
+
+// --- MIDI ---------------------------------------------------------------------
+
+let midiAccess = null;
+let output = null;
+
+function refreshOutputs() {
+    const previous = midiSelect.value;
+    const outputs = [...midiAccess.outputs.values()];
+    midiSelect.innerHTML = "";
+    if (outputs.length === 0) {
+        midiSelect.innerHTML = "<option value=''>– kein MIDI-Ausgang gefunden –</option>";
+    }
+    for (const o of outputs) {
+        const opt = document.createElement("option");
+        opt.value = o.id;
+        opt.textContent = o.name;
+        midiSelect.appendChild(opt);
+    }
+    const preferred = outputs.find(o => o.id === previous)
+        || outputs.find(o => /IAC|loopMIDI/i.test(o.name))
+        || outputs[0];
+    if (preferred) midiSelect.value = preferred.id;
+    selectOutput();
+}
+
+function selectOutput() {
+    output = midiAccess && midiAccess.outputs.get(midiSelect.value) || null;
+    midiStatus.textContent = output ? "bereit" : "";
+    midiStatus.className = output ? "" : "warn";
+}
+
+midiSelect.addEventListener("change", selectOutput);
+
+if (!navigator.requestMIDIAccess) {
+    midiStatus.textContent = "Dieser Browser kann kein Web MIDI (Chrome oder Edge verwenden).";
+    midiStatus.className = "warn";
+} else if (!window.isSecureContext) {
+    midiStatus.textContent = `Bitte über http://localhost:${location.port} öffnen, sonst ist MIDI gesperrt.`;
+    midiStatus.className = "warn";
+} else {
+    navigator.requestMIDIAccess().then(access => {
+        midiAccess = access;
+        access.onstatechange = refreshOutputs;
+        refreshOutputs();
+    }).catch(err => {
+        midiStatus.textContent = "MIDI-Zugriff verweigert: " + err.message;
+        midiStatus.className = "warn";
+    });
+}
+
+function sendMidi(bytes) {
+    if (output) output.send(bytes);
+}
+
+// Pro Person die gerade gedrückten Noten, um bei Verbindungsabbruch Note Off zu senden
+const held = { A: new Set(), B: new Set() };
+
+function handleButton(person, index, state) {
+    const p = config.persons[person];
+    const b = p && p.buttons[index];
+    if (!b) return;
+    const ch = (p.midiChannel - 1) & 0x0f;
+    if (state === "down") {
+        sendMidi([0x90 | ch, b.note, config.velocity]);
+        held[person].add(b.note);
+    } else {
+        sendMidi([0x80 | ch, b.note, 0]);
+        held[person].delete(b.note);
+    }
+    padEls[person][index].classList.toggle("down", state === "down");
+    log(`Person ${person} Button ${b.label} ${state === "down" ? "an " : "aus"}  → Kanal ${p.midiChannel}, Note ${b.note}`);
+}
+
+function allOff(person) {
+    const ch = (config.persons[person].midiChannel - 1) & 0x0f;
+    for (const note of held[person]) sendMidi([0x80 | ch, note, 0]);
+    held[person].clear();
+    padEls[person].forEach(el => el.classList.remove("down"));
+}
+
+// --- Anzeige der Personen -------------------------------------------------------
+
+const padEls = {};
+for (const person of Object.keys(config.persons)) {
+    const p = config.persons[person];
+    const card = document.getElementById(`person-${person}`);
+    card.innerHTML = `
+        <div class="row" style="justify-content:space-between">
+            <div class="row"><span class="dot" id="dot-${person}"></span>
+                <h2 style="margin:0">Person ${person}</h2>
+                <span id="state-${person}" style="opacity:.7">frei</span></div>
+            <div class="row"><span style="opacity:.6">MIDI-Kanal ${p.midiChannel}</span>
+                <button data-reset="${person}">Zurücksetzen</button></div>
+        </div>
+        <div class="pads"></div>`;
+    const padsEl = card.querySelector(".pads");
+    padEls[person] = p.buttons.map(b => {
+        const el = document.createElement("div");
+        el.className = "pad";
+        el.style.background = b.color;
+        el.textContent = b.label;
+        el.title = `Note ${b.note}`;
+        padsEl.appendChild(el);
+        return el;
+    });
+}
+
+function showStatus(slots) {
+    for (const [person, s] of Object.entries(slots)) {
+        const dot = document.getElementById(`dot-${person}`);
+        const state = document.getElementById(`state-${person}`);
+        if (!dot) continue;
+        dot.className = "dot" + (s.connected ? " on" : s.taken ? " away" : "");
+        state.textContent = s.connected ? "verbunden" : s.taken ? "getrennt (Platz reserviert)" : "frei";
+    }
+}
+
+// --- Verbindung zum Server ----------------------------------------------------
+
+let ws = null;
+
+function connect() {
+    ws = new WebSocket(`ws://${location.host}/ws`);
+    ws.onopen = () => {
+        ws.send(JSON.stringify({ type: "hello", role: "host" }));
+        log("Mit Server verbunden");
+    };
+    ws.onmessage = e => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === "btn") handleButton(msg.person, msg.button, msg.state);
+        else if (msg.type === "allOff") allOff(msg.person);
+        else if (msg.type === "status") showStatus(msg.slots);
+    };
+    ws.onclose = () => {
+        Object.keys(held).forEach(allOff);
+        log("Verbindung zum Server verloren – verbinde neu …");
+        setTimeout(connect, 1000);
+    };
+}
+
+document.addEventListener("click", e => {
+    const person = e.target.dataset && e.target.dataset.reset;
+    if (person && ws) ws.send(JSON.stringify({ type: "reset", person }));
+});
+document.getElementById("resetAll").addEventListener("click", () => {
+    if (ws) ws.send(JSON.stringify({ type: "reset" }));
+});
+
+connect();
+</script>
+</body>
+</html>

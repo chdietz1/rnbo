@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#111">
+<title>Controller</title>
+<style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    [hidden] { display: none !important; }
+    html, body { margin: 0; height: 100%; background: #111; color: #fff;
+        font-family: system-ui, -apple-system, sans-serif;
+        user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+        overscroll-behavior: none; touch-action: none; }
+    body { display: flex; flex-direction: column; height: 100dvh; padding: 12px; gap: 12px; }
+    header { display: flex; justify-content: space-between; align-items: center; }
+    h1 { margin: 0; font-size: 1.4rem; }
+    #conn { font-size: .85rem; opacity: .7; }
+    #pads { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pad { border: 0; border-radius: 18px; font-size: 2rem; font-weight: 700; color: rgba(255,255,255,.9);
+        box-shadow: inset 0 -6px 0 rgba(0,0,0,.25); transition: transform .05s, filter .05s; }
+    .pad.down { transform: scale(.96); filter: brightness(1.4); box-shadow: none; }
+    #msg { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+        font-size: 1.2rem; opacity: .8; padding: 0 20px; }
+</style>
+</head>
+<body>
+<header>
+    <h1 id="title">Verbinde …</h1>
+    <span id="conn"></span>
+</header>
+<div id="msg">Verbinde mit dem Rechner …</div>
+<div id="pads" hidden></div>
+
+<script src="config.js"></script>
+<script>
+const config = window.LIVE_MIDI_CONFIG;
+const titleEl = document.getElementById("title");
+const connEl = document.getElementById("conn");
+const msgEl = document.getElementById("msg");
+const padsEl = document.getElementById("pads");
+
+// Merkt sich das Gerät, damit die Person nach einem Reload dieselbe Rolle behält
+function getClientId() {
+    let id = null;
+    try { id = localStorage.getItem("liveMidiClientId"); } catch {}
+    if (!id) {
+        id = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now());
+        try { localStorage.setItem("liveMidiClientId", id); } catch {}
+    }
+    return id;
+}
+const clientId = getClientId();
+
+let ws = null;
+let person = null;
+
+function showMessage(text) {
+    padsEl.hidden = true;
+    msgEl.hidden = false;
+    msgEl.textContent = text;
+}
+
+function buildPads(p) {
+    const buttons = config.persons[p].buttons;
+    padsEl.innerHTML = "";
+    padsEl.style.gridTemplateRows = `repeat(${Math.ceil(buttons.length / 2)}, 1fr)`;
+    buttons.forEach((b, i) => {
+        const el = document.createElement("button");
+        el.className = "pad";
+        el.textContent = b.label;
+        el.style.background = b.color;
+        let pointer = null;
+        const down = e => {
+            e.preventDefault();
+            if (pointer !== null) return;
+            pointer = e.pointerId;
+            el.setPointerCapture?.(e.pointerId);
+            el.classList.add("down");
+            if (navigator.vibrate) navigator.vibrate(15);
+            sendButton(i, "down");
+        };
+        const up = e => {
+            if (pointer !== e.pointerId) return;
+            pointer = null;
+            el.classList.remove("down");
+            sendButton(i, "up");
+        };
+        el.addEventListener("pointerdown", down);
+        el.addEventListener("pointerup", up);
+        el.addEventListener("pointercancel", up);
+        el.addEventListener("contextmenu", e => e.preventDefault());
+        padsEl.appendChild(el);
+    });
+    msgEl.hidden = true;
+    padsEl.hidden = false;
+}
+
+function sendButton(button, state) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "btn", button, state }));
+    }
+}
+
+function connect() {
+    ws = new WebSocket(`ws://${location.host}/ws`);
+    ws.onopen = () => {
+        connEl.textContent = "verbunden";
+        ws.send(JSON.stringify({ type: "hello", role: "phone", clientId }));
+    };
+    ws.onmessage = e => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === "role") {
+            if (person !== msg.person) {
+                person = msg.person;
+                titleEl.textContent = `Person ${person}`;
+                document.title = `Person ${person}`;
+                buildPads(person);
+            }
+        } else if (msg.type === "full") {
+            titleEl.textContent = "Belegt";
+            showMessage("Person A und Person B sind schon vergeben.");
+        } else if (msg.type === "released") {
+            person = null;
+            titleEl.textContent = "Freigegeben";
+            showMessage("Deine Rolle wurde am Rechner zurückgesetzt. Seite neu laden, um wieder mitzumachen.");
+            ws.onclose = null;
+            ws.close();
+            connEl.textContent = "";
+        }
+    };
+    ws.onclose = () => {
+        connEl.textContent = "getrennt – verbinde neu …";
+        setTimeout(connect, 1000);
+    };
+}
+
+connect();
+</script>
+</body>
+</html>
