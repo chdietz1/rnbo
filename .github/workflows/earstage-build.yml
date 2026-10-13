@@ -1,0 +1,54 @@
+name: EarStage Plugin bauen
+
+on:
+  push:
+    paths:
+      - "binaural-iem/**"
+      - ".github/workflows/earstage-build.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Engine-Tests
+        run: |
+          c++ -std=c++17 -O2 -Wall -Wextra -Ibinaural-iem/Source binaural-iem/tests/engine_test.cpp -o engine_test
+          ./engine_test
+
+  macos:
+    needs: test
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Konfigurieren (Universal Binary arm64 + x86_64)
+        run: >
+          cmake -S binaural-iem -B build -G Xcode
+          -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+          -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+
+      - name: Bauen
+        run: cmake --build build --config Release --target EarStage_VST3 EarStage_AU -- -quiet
+
+      - name: Ad-hoc signieren und packen
+        run: |
+          mkdir -p dist
+          cp -R build/EarStage_artefacts/Release/VST3/EarStage.vst3 dist/
+          cp -R build/EarStage_artefacts/Release/AU/EarStage.component dist/
+          codesign --force --deep --sign - dist/EarStage.vst3
+          codesign --force --deep --sign - dist/EarStage.component
+          cp binaural-iem/README.md dist/LIESMICH.md
+
+      - name: AU validieren
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R dist/EarStage.component ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          auval -v aufx ErSt Bstl
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EarStage-macOS
+          path: dist
