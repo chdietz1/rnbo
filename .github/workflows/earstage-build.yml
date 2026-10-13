@@ -40,15 +40,17 @@ jobs:
           codesign --force --deep --sign - dist/EarStage.vst3
           codesign --force --deep --sign - dist/EarStage.component
           cp binaural-iem/README.md dist/LIESMICH.md
+          # GitHub-Artefakte verlieren Dateirechte -> vorher mit ditto zippen (behält +x und Signatur)
+          ditto -c -k --sequesterRsrc dist EarStage-macOS.zip
 
       - name: AU validieren
         run: |
           mkdir -p ~/Library/Audio/Plug-Ins/Components
-          cp -R dist/EarStage.component ~/Library/Audio/Plug-Ins/Components/
+          ditto dist/EarStage.component ~/Library/Audio/Plug-Ins/Components/EarStage.component
           killall -9 AudioComponentRegistrar || true
           auval -v aufx ErSt Bstl
 
       - uses: actions/upload-artifact@v4
         with:
           name: EarStage-macOS
-          path: dist
+          path: EarStage-macOS.zip
